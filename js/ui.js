@@ -70,7 +70,7 @@ window.addEventListener('resize', throttledMaxHeight);
 let liveFeedModulePromise;
 async function loadLiveFeedModule() {
     if (!liveFeedModulePromise) {
-        liveFeedModulePromise = import('./livefeed.js?v=115').then(module => {
+        liveFeedModulePromise = import('./livefeed.js?v=119').then(module => {
             // Auto-init MemoSender to pre-fetch prices
             if (module.MemoSender && typeof module.MemoSender.init === 'function') {
                 module.MemoSender.init();
@@ -103,8 +103,8 @@ function loadScript(src) {
 let meshScriptsPromise;
 function ensureMeshScripts() {
     if (meshScriptsPromise) return meshScriptsPromise;
-    meshScriptsPromise = loadScript('js/repeaters.js?v=115')
-        .then(() => loadScript('js/mesh.js?v=115'))
+    meshScriptsPromise = loadScript('js/repeaters.js?v=117')
+        .then(() => loadScript('js/mesh.js?v=117'))
         .catch(err => { logSystem?.(`ERR: Mesh/Repeater scripts failed - ${err.message}`); throw err; });
     return meshScriptsPromise;
 }
@@ -339,9 +339,17 @@ if (earthquakeToggle) {
         });
     });
 
-    el('quake-mag-select')?.addEventListener('change', (e) => {
-        window.earthquakeMinMagnitude = parseFloat(e.target.value) || 0;
-        if (earthquakeToggle.checked && typeof fetchEarthquakes === 'function') fetchEarthquakes();
+    const quakeMagBtns = document.querySelectorAll('.quake-mag-btn');
+    quakeMagBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Update active state
+            quakeMagBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Set global and fetch
+            window.earthquakeMinMagnitude = parseFloat(btn.dataset.value) || 0;
+            if (earthquakeToggle.checked && typeof fetchEarthquakes === 'function') fetchEarthquakes();
+        });
     });
 }
 
@@ -712,6 +720,49 @@ window.createPopup = (lngLat, html, props = {}, layer = 'generic', opts = {}) =>
             }
         };
         content.appendChild(copyBtn);
+
+        // NEW: Time Ago Indicator for Live Feed items
+        if (props._fromLiveFeed) {
+            const timeDisplay = document.createElement('div');
+            timeDisplay.className = 'popup-time-display';
+            let timeText = 'JUST NOW';
+
+            if (props._forceTimeLabel) {
+                // Use the exact string passed from Live Feed (forced by user request)
+                timeText = props._forceTimeLabel;
+            } else if (props.time) {
+                const ts = props.time;
+                const diff = Date.now() - ts;
+                const min = Math.floor(diff / 60000);
+
+                if (min >= 1) {
+                    if (min < 60) timeText = `${min}M AGO`;
+                    else {
+                        const hr = Math.floor(min / 60);
+                        if (hr < 24) timeText = `${hr}H AGO`;
+                        else {
+                            const day = Math.floor(hr / 24);
+                            timeText = `${day}D AGO`;
+                        }
+                    }
+                }
+            }
+            // Only append if we have text (or fallback is JUST NOW)
+            timeDisplay.textContent = timeText; // Using textContent instead of innerText for perf
+
+            // Styles
+            timeDisplay.style.position = 'absolute';
+            timeDisplay.style.top = '8px';
+            timeDisplay.style.left = '12px'; // Align left
+            timeDisplay.style.fontSize = '12px';
+            timeDisplay.style.fontWeight = 'bold';
+            timeDisplay.style.color = '#888'; // Subtle
+            timeDisplay.style.fontFamily = "'Courier New', monospace";
+            timeDisplay.style.zIndex = '10';
+            timeDisplay.style.pointerEvents = 'none';
+
+            content.appendChild(timeDisplay);
+        }
     }, 10);
 
     return currentPopup;

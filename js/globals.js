@@ -208,7 +208,7 @@ let isUpdatingData = false;
 
 // --- Global Data Worker Initialization (Shared) ---
 try {
-    window.dataWorker = new Worker('js/data-worker.js?v=115');
+    window.dataWorker = new Worker('js/data-worker.js?v=117');
     console.log('SYS: Global Data Worker initialized.');
 } catch (e) {
     console.error('SYS: Failed to initialize data worker:', e);

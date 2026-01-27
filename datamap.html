@@ -5,28 +5,16 @@
     <meta charset="utf-8" />
     <title>GEOINT.WORLD</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="apple-touch-icon" sizes="57x57" href="favicon/apple-icon-57x57.png">
-    <link rel="apple-touch-icon" sizes="60x60" href="favicon/apple-icon-60x60.png">
-    <link rel="apple-touch-icon" sizes="72x72" href="favicon/apple-icon-72x72.png">
-    <link rel="apple-touch-icon" sizes="76x76" href="favicon/apple-icon-76x76.png">
-    <link rel="apple-touch-icon" sizes="114x114" href="favicon/apple-icon-114x114.png">
-    <link rel="apple-touch-icon" sizes="120x120" href="favicon/apple-icon-120x120.png">
-    <link rel="apple-touch-icon" sizes="144x144" href="favicon/apple-icon-144x144.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="favicon/apple-icon-152x152.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-icon-180x180.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="favicon/android-icon-192x192.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="96x96" href="favicon/favicon-96x96.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
-    <link rel="manifest" href="favicon/manifest.json">
-    <meta name="msapplication-TileColor" content="#ffffff">
-    <meta name="msapplication-TileImage" content="favicon/ms-icon-144x144.png">
+    <link rel="icon" href="/favicon.ico" sizes="32x32">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#ff6800">
     <script src="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/satellite.js/5.0.0/satellite.min.js" defer></script>
     <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js" defer></script>
     <link href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css" rel="stylesheet" />
-    <link rel="stylesheet" href="css/style.css?v=115">
+    <link rel="stylesheet" href="css/style.css?v=117">
     <script>
         window.onerror = function (msg, url, lineNo, columnNo, error) {
             const message = `[GLOBAL ERROR] ${msg} at ${url}:${lineNo}:${columnNo}`;
@@ -1453,7 +1441,7 @@
     <div id="earthquake-filter-modal" class="modal">
         <div class="modal-content">
             <div class="panel-header">
-                <span>// EARTHQUAKE SETTINGS</span>
+                <span>// EARTHQUAKE FILTER</span>
                 <span id="close-earthquake-filter-btn" class="cursor-pointer">[X]</span>
             </div>
             <div class="panel-content">
@@ -1462,10 +1450,11 @@
                         <span>TIMEFRAME</span>
                     </div>
                     <div class="unit-toggle-wrapper" style="margin-top: 8px; border: none; background: none; gap: 5px;">
-                        <div class="unit-option quake-time-btn" data-value="hour" style="border: 1px solid #ff6800;">1H
+                        <div class="unit-option quake-time-btn active" data-value="hour"
+                            style="border: 1px solid #ff6800;">1H
                         </div>
-                        <div class="unit-option quake-time-btn active" data-value="day"
-                            style="border: 1px solid #ff6800;">1D</div>
+                        <div class="unit-option quake-time-btn" data-value="day" style="border: 1px solid #ff6800;">1D
+                        </div>
                         <div class="unit-option quake-time-btn" data-value="week" style="border: 1px solid #ff6800;">7D
                         </div>
                         <div class="unit-option quake-time-btn" data-value="month" style="border: 1px solid #ff6800;">
@@ -1474,15 +1463,19 @@
                 </div>
 
                 <div class="control-group" style="margin-bottom: 20px;">
-                    <label style="display: block; margin-bottom: 8px; color: #ff6800; font-size: 11px;">MIN
-                        MAGNITUDE</label>
-                    <select id="quake-mag-select"
-                        style="width: 100%; background: #1a0d00; border: 1px solid #ff6800; color: #ff6800; padding: 8px; font-family: 'Courier New', monospace;">
-                        <option value="all">All Earthquakes</option>
-                        <option value="1.0">M1.0+</option>
-                        <option value="2.5" selected>M2.5+</option>
-                        <option value="4.5">M4.5+ (Significant)</option>
-                    </select>
+                    <div class="slider-label">
+                        <span>MAGNITUDE</span>
+                    </div>
+                    <div class="unit-toggle-wrapper" style="margin-top: 8px; border: none; background: none; gap: 5px;">
+                        <div class="unit-option quake-mag-btn" data-value="0" style="border: 1px solid #ff6800;">ALL
+                        </div>
+                        <div class="unit-option quake-mag-btn" data-value="1.0" style="border: 1px solid #ff6800;">M1.0+
+                        </div>
+                        <div class="unit-option quake-mag-btn active" data-value="2.5"
+                            style="border: 1px solid #ff6800;">M2.5+</div>
+                        <div class="unit-option quake-mag-btn" data-value="4.5" style="border: 1px solid #ff6800;">M4.5+
+                        </div>
+                    </div>
                 </div>
 
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 20px;">
@@ -1502,18 +1495,18 @@
     <div id="map"></div>
 
     <!-- JS Modules -->
-    <script src="js/utils.js?v=115"></script>
-    <script src="js/globals.js?v=115" defer></script>
-    <script src="js/flights.js?v=115" defer></script>
-    <script src="js/space.js?v=115" defer></script>
-    <script src="js/ships.js?v=115" defer></script>
-    <script src="js/radio.js?v=115" defer></script>
-    <script src="js/cables.js?v=115" defer></script>
-    <script src="js/map.js?v=115" defer></script>
-    <script src="js/ui.js?v=115" defer></script>
-    <script src="js/news.js?v=115" defer></script>
-    <script src="js/polymarket.js?v=115" defer></script>
-    <script src="js/earthquakes.js?v=115" defer></script>
+    <script src="js/utils.js?v=117"></script>
+    <script src="js/globals.js?v=117" defer></script>
+    <script src="js/flights.js?v=117" defer></script>
+    <script src="js/space.js?v=117" defer></script>
+    <script src="js/ships.js?v=117" defer></script>
+    <script src="js/radio.js?v=117" defer></script>
+    <script src="js/cables.js?v=117" defer></script>
+    <script src="js/map.js?v=118" defer></script>
+    <script src="js/ui.js?v=119" defer></script>
+    <script src="js/news.js?v=117" defer></script>
+    <script src="js/polymarket.js?v=117" defer></script>
+    <script src="js/earthquakes.js?v=117" defer></script>
 
 </body>
 

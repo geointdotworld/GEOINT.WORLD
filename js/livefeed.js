@@ -275,7 +275,7 @@ const MemoFeed = {
     },
 
     // Unified Locate Handler
-    locate(encodedJson, signature) {
+    locate(encodedJson, signature, timestamp, timeLabel) {
         try {
             let data = JSON.parse(decodeURIComponent(encodedJson));
             console.log('LOCATE: Raw parsed data:', data);
@@ -297,9 +297,15 @@ const MemoFeed = {
                 }
             }
 
+            // Fallback to transaction time if data.time is missing
+            if (!data.time && timestamp) {
+                data.time = Number(timestamp);
+            }
+
             // Inject signature and mark as from live feed (to hide send button)
             data.signature = signature;
             data._fromLiveFeed = true;
+            if (timeLabel) data._forceTimeLabel = timeLabel;
 
             if (data.lat && data.lng) {
                 const coords = [parseFloat(data.lng), parseFloat(data.lat)];
@@ -310,14 +316,20 @@ const MemoFeed = {
 
                 if (existingProps) {
                     console.log('LOCATE: Found existing feature, hydrating...');
-                    // Use rich properties but keep signature/type
-                    data = { ...existingProps, signature: signature, type: data.type };
+                    // Use rich properties but keep signature/type AND live feed markers
+                    data = {
+                        ...existingProps,
+                        signature: signature,
+                        type: data.type,
+                        _fromLiveFeed: true,
+                        _forceTimeLabel: data._forceTimeLabel,
+                        time: data.time // Prefer feed time for consistency with label
+                    };
                 } else {
                     console.log('LOCATE: No existing feature, using memo data');
                     // Add visual marker only if NOT on map
-                    if (!this.isEntityOnMap(data)) {
-                        this.addTemporaryMarker(data, coords);
-                    }
+                    // FIX: Always add temporary marker if feature not found, even if layer is on (it might be old data)
+                    this.addTemporaryMarker(data, coords);
                 }
 
                 // FINAL SANITIZATION: Cast types strictly before usage
@@ -335,12 +347,11 @@ const MemoFeed = {
                     window.mapClickHandlers[data.type](data, coords);
                 }
                 else {
-                    // Fallback
-                    map.flyTo({ center: coords, zoom: 12, speed: 2 });
-                    new maplibregl.Popup({ closeButton: true, className: 'cyber-popup' })
-                        .setLngLat(coords)
-                        .setHTML(`<div class='popup-row'>LOCATED SIGNAL</div>${window.createTrackedPopup ? '' : ('<div class="popup-row"><a href="https://solscan.io/tx/' + signature + '" target="_blank" class="intel-btn" style="margin-top:10px">[ VIEW ON SOLSCAN ]</a></div>')}`)
-                        .addTo(map);
+                    // Fallback using createPopup (supports time-ago)
+                    const html = `<div class='popup-row'>LOCATED SIGNAL</div>` +
+                        (window.createTrackedPopup ? '' : `<div class="popup-row"><a href="https://solscan.io/tx/${signature}" target="_blank" class="intel-btn" style="margin-top:10px">[ VIEW ON SOLSCAN ]</a></div>`);
+
+                    window.createPopup(coords, html, data, 'generic', { className: 'cyber-popup' });
                 }
             } else {
                 alert('No coordinates found in this inscription');
@@ -365,7 +376,7 @@ const MemoFeed = {
                         <span style="color:#888; margin-left:8px; font-size:11px;">${this.timeAgo(m.time)}</span>
                     </div>
                     <div style="display: flex; gap: 5px;">
-                        <button class="memo-scope-btn" title="Locate" onclick="MemoFeed.locate('${encodeURIComponent(m.txt)}', '${m.sig}')">
+                        <button class="memo-scope-btn" title="Locate" onclick="MemoFeed.locate('${encodeURIComponent(m.txt)}', '${m.sig}', ${m.time}, '${this.timeAgo(m.time)}')">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                         </button>
                         <button class="memo-copy-btn" onclick="navigator.clipboard.writeText(decodeURIComponent('${encodeURIComponent(m.txt)}')).then(function(){this.style.color='#ff6800';setTimeout(()=>{this.style.color=''},1000)}.bind(this))" title="Copy Text">
@@ -404,7 +415,7 @@ const MemoFeed = {
                         <span style="color:#888; margin-left:8px; font-size:11px;">${this.timeAgo(memo.time)}</span>
                     </div>
                     <div style="display: flex; gap: 5px;">
-                        <button class="memo-scope-btn" title="Locate" onclick="MemoFeed.locate('${encodeURIComponent(memo.txt)}', '${memo.sig}')">
+                        <button class="memo-scope-btn" title="Locate" onclick="MemoFeed.locate('${encodeURIComponent(memo.txt)}', '${memo.sig}', ${memo.time}, '${this.timeAgo(memo.time)}')">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                                 <circle cx="12" cy="10" r="3"></circle>
@@ -705,6 +716,26 @@ const MemoFeed = {
                     margin-left: 8px;
                     vertical-align: middle;
                 }
+                /* Popup Time Styling */
+                .popup-time-label, .popup-time-display {
+                    position: absolute;
+                    top: 5px;
+                    left: 10px;
+                    color: #ff6800;
+                    font-size: 9px;
+                    font-weight: bold;
+                    font-family: 'Courier New', monospace;
+                    text-transform: uppercase;
+                    background: rgba(0, 0, 0, 0.8);
+                    padding: 2px 6px;
+                    border: 1px solid #331a00;
+                    border-radius: 4px;
+                    z-index: 10;
+                    pointer-events: none;
+                    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+                }
+                /* Ensure close button is on top */
+                .maplibregl-popup-close-button { z-index: 20; }
             `;
             document.head.appendChild(style);
         }

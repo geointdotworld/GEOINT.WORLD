@@ -3,7 +3,7 @@
 // Globals
 let earthquakeData = [];
 let earthquakeInterval = null;
-let earthquakeTimeframe = 'day';
+let earthquakeTimeframe = 'hour';
 let earthquakeMinMagnitude = 2.5;
 
 // Initialize earthquake source and layer
@@ -133,6 +133,22 @@ async function fetchEarthquakes() {
 
         // Filter by minimum magnitude (API may return more than requested)
         const filtered = data.features.filter(f => f.properties.mag >= earthquakeMinMagnitude);
+
+        // Fallback: If 1H yielded no results, auto-switch to 24H (Day)
+        if (filtered.length === 0 && earthquakeTimeframe === 'hour') {
+            logSystem('QUAKE: No earthquakes found in last hour. Extending search to 24h...');
+            earthquakeTimeframe = 'day';
+
+            // Update UI buttons to reflect change
+            const btns = document.querySelectorAll('.quake-time-btn');
+            btns.forEach(b => {
+                if (b.dataset.value === 'day') b.classList.add('active');
+                else b.classList.remove('active');
+            });
+
+            // Re-fetch with new timeframe
+            return fetchEarthquakes();
+        }
 
         // Convert to our format
         earthquakeData = filtered.map(f => ({

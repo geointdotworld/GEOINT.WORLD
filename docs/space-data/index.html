@@ -5,9 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GEOINT.WORLD // SPACE DATA</title>
-    <link rel="icon" type="image/png" href="../../favicon/favicon-32x32.png">
+    <link rel="icon" href="/favicon.ico" sizes="32x32">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#ff6800">
-    <link rel="stylesheet" href="../style.css?v=115">
+    <link rel="stylesheet" href="../style.css?v=117">
 </head>
 
 <body>
@@ -20,6 +23,11 @@
                 <span>//</span>
                 <a href="../introduction/"><span class="mobile-docs-text">DOCS</span><span
                         class="desktop-docs-text">DOCUMENTATION</span></a>
+                <span>|</span>
+                <a href="https://github.com/geointdotworld" target="_blank"
+                    style="display: inline-flex; align-items: center;">
+                    <img src="../../assets/github_logo.png" alt="GitHub" style="height: 20px; vertical-align: middle;">
+                </a>
             </div>
             <nav class="top-nav">
                 <a href="../../datamap.html">LAUNCH <span class="desktop-text">APP</span></a>
@@ -101,56 +109,52 @@
                         </div>
                     </div>
 
+
+
                     <blockquote>
-                        Positions are calculated locally in your browser using the SGP4 (Simplified
-                        General Perturbations) propagator. Accuracy is typically within a few kilometers but depends on
-                        the "freshness" of the TLE epoch.
+                        Use the <span class="settings-icon">⚙</span> icon next to the SPACE DATA layer in the
+                        application to access the advanced satellite filter menu.
                     </blockquote>
 
-                    <h2>ORBITAL CLASSES</h2>
-                    <p>The system tracks thousands of objects categorized into specific functional groups:</p>
+                    <h2>ADVANCED FILTERS</h2>
+                    <p>The Satellite Filter panel provides granular control over which constellations are displayed.</p>
 
-                    <div class="feature-grid">
-                        <div class="feature-card">
-                            <h4>SATELITES</h4>
-                            <p>Active payloads including Weather (NOAA/GOES), Navigation (GPS/GLONASS/GALILEO), and
-                                Communications (Starlink/OneWeb/Iridium).</p>
+                    <div class="feature-grid"
+                        style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+                        <div class="feature-card" style="padding: 1rem;">
+                            <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem; color: #ff6800;">NAVIGATION</h4>
+                            <ul style="margin: 0; padding-left: 1rem; font-size: 0.85rem;">
+                                <li>GPS (USA)</li>
+                                <li>GLONASS (Russia)</li>
+                                <li>GALILEO (EU)</li>
+                                <li>BEIDOU (China)</li>
+                            </ul>
                         </div>
-                        <div class="feature-card">
-                            <h4>STATIONS</h4>
-                            <p>Large manned and unmanned platforms, including the International Space Station (ISS) and
-                                the Tiangong Space Station (CSS).</p>
+                        <div class="feature-card" style="padding: 1rem;">
+                            <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem; color: #ff6800;">COMMUNICATION</h4>
+                            <ul style="margin: 0; padding-left: 1rem; font-size: 0.85rem;">
+                                <li>STARLINK (SpaceX)</li>
+                                <li>ONEWEB</li>
+                                <li>IRIDIUM</li>
+                            </ul>
                         </div>
-                        <div class="feature-card">
-                            <h4>DEBRIS & ROCKETS</h4>
-                            <p>Spent rocket bodies and tracked debris. We specifically monitor "Last 30 Days" launches
-                                for new objects entering orbit.</p>
+                        <div class="feature-card" style="padding: 1rem;">
+                            <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem; color: #ff6800;">OBSERVATION</h4>
+                            <ul style="margin: 0; padding-left: 1rem; font-size: 0.85rem;">
+                                <li>WEATHER (GOES/METEOSAT)</li>
+                                <li>NOAA</li>
+                                <li>PLANET</li>
+                                <li>CUBESATS</li>
+                            </ul>
                         </div>
                     </div>
 
-                    <h3>IDENTIFICATION</h3>
-                    <p>Every tracked object is assigned a catalogue number by USSPACECOM (United States Space Command).
-                    </p>
-                    <pre><code>OBJECT: STARLINK-3031
-NORAD ID: 49458
-EPOCH: 23145.42342342
-INCLINATION: 53.2185
-ECCENTRICITY: 0.0001321
-MEAN MOTION: 15.06392131
-REV NUMBER: 9482</code></pre>
-
-                    <h2>VISUALIZATION</h2>
-                    <p>Objects are plotted at their sub-satellite point (the point on Earth directly below the
-                        satellite). </p>
-                    <ul>
-                        <li><strong>Altitude:</strong> Height above the WGS84 ellipsoid (in km/mi).</li>
-                        <li><strong>Velocity:</strong> Orbital speed relative to Earth's center.</li>
-                    </ul>
-
-                    <h2>REFRESH</h2>
+                    <h3>REFRESH</h3>
                     <p>Control the automatic data refresh interval. Available options:</p>
                     <ul style="margin: 1rem 0; padding-left: 1.5rem;">
-                        <li style="margin-bottom: 0.5rem;"><strong>1m</strong> — Refresh every 1 minute (default)</li>
+                        <li style="margin-bottom: 0.5rem;"><strong>30s</strong> — Refresh every 30 seconds</li>
+                        <li style="margin-bottom: 0.5rem;"><strong>1m</strong> — Refresh every 1 minute</li>
+                        <li style="margin-bottom: 0.5rem;"><strong>5m</strong> — Refresh every 5 minutes</li>
                     </ul>
                     <p>Use the <strong>HIDE</strong> button to minimize the filter panel and maximize map visibility.
                     </p>

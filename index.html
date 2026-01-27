@@ -5,22 +5,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GEOINT.WORLD</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-icon-180x180.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
-    <link rel="manifest" href="favicon/manifest.json">
+    <link rel="icon" href="/favicon.ico" sizes="32x32">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#ff6800">
 
     <!-- Preload Application Page and Core Dependencies -->
     <link rel="prerender" href="datamap.html">
     <link rel="prefetch" href="datamap.html">
-    <link rel="stylesheet" href="css/style.css?v=115">
+    <link rel="stylesheet" href="css/style.css?v=117">
     <link rel="prefetch" href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js">
     <link rel="prefetch" href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css">
-    <link rel="prefetch" href="js/utils.js?v=115">
-    <link rel="prefetch" href="js/globals.js?v=115">
-    <link rel="prefetch" href="js/map.js?v=115">
-    <link rel="prefetch" href="js/ui.js?v=115">
+    <link rel="prefetch" href="js/utils.js?v=117">
+    <link rel="prefetch" href="js/globals.js?v=117">
+    <link rel="prefetch" href="js/map.js?v=117">
+    <link rel="prefetch" href="js/ui.js?v=117">
     <link rel="prefetch" href="https://tiles.openfreemap.org/planet">
     <style>
         :root {
@@ -534,7 +534,7 @@
     <!-- NEW BUTTON ROW -->
     <div class="quick-links">
         <a href="docs/index.html" class="quick-btn">DOCS</a>
-        <a href="whitepaper.pdf?v=115" target="_blank" class="quick-btn">WHITEPAPER</a>
+        <a href="whitepaper.pdf?v=117" target="_blank" class="quick-btn">WHITEPAPER</a>
     </div>
 
     <div class="info-box">
@@ -759,19 +759,19 @@
                     const link = document.createElement('link');
                     link.rel = 'prefetch';
                     const cacheBusters = {
-                        'datamap.html': 'v=111',
-                        'css/style.css': 'v=111',
-                        'js/utils.js': 'v=111',
-                        'js/polymarket.js': 'v=111',
-                        'js/globals.js': 'v=111',
-                        'js/flights.js': 'v=111',
-                        'js/space.js': 'v=111',
-                        'js/ships.js': 'v=111',
-                        'js/radio.js': 'v=111',
-                        'js/cables.js': 'v=111',
-                        'js/map.js': 'v=111',
-                        'js/ui.js': 'v=111',
-                        'js/news.js': 'v=111'
+                        'datamap.html': 'v=117',
+                        'css/style.css': 'v=117',
+                        'js/utils.js': 'v=117',
+                        'js/polymarket.js': 'v=117',
+                        'js/globals.js': 'v=117',
+                        'js/flights.js': 'v=117',
+                        'js/space.js': 'v=117',
+                        'js/ships.js': 'v=117',
+                        'js/radio.js': 'v=117',
+                        'js/cables.js': 'v=117',
+                        'js/map.js': 'v=117',
+                        'js/ui.js': 'v=117',
+                        'js/news.js': 'v=117'
                     };
                     const version = cacheBusters[asset] || 'v=1';
                     link.href = asset + '?' + version;
@@ -786,10 +786,10 @@
         setTimeout(typeLoop, 1000);
         prefetchApp(); // Start pre-fetching app assets in background
     </script>
-    <script src="js/utils.js?v=115"></script>
-    <script src="js/globals.js?v=115"></script>
-    <script src="js/news.js?v=115" defer></script>
-    <script src="js/polymarket.js?v=115" defer></script>
+    <script src="js/utils.js?v=117"></script>
+    <script src="js/globals.js?v=117"></script>
+    <script src="js/news.js?v=117" defer></script>
+    <script src="js/polymarket.js?v=117" defer></script>
 </body>
 
 </html>

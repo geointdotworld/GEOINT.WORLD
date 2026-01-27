@@ -160,20 +160,30 @@ const createTrackedPopup = (html, coords, layer, props, opts = {}) => {
         content.appendChild(copyBtn);
 
         // Time Header Label
-        if (props.time || props.start) {
-            const tVal = props.time || props.start; // Fallback for various data types
-            let ms = 0;
-            // Parse time
-            if (typeof tVal === 'number') ms = tVal;
-            else if (typeof tVal === 'string') ms = new Date(tVal).getTime();
+        if (props._forceTimeLabel || props.time || props.start) {
+            let timeStr = 'JUST NOW';
+            let showLabel = false;
 
-            if (ms > 0 && !isNaN(ms)) {
-                const diff = Math.floor((Date.now() - ms) / 1000);
-                let timeStr = 'JUST NOW';
-                if (diff >= 60 && diff < 3600) timeStr = `${Math.floor(diff / 60)}M AGO`;
-                else if (diff >= 3600 && diff < 86400) timeStr = `${Math.floor(diff / 3600)}H AGO`;
-                else if (diff >= 86400) timeStr = `${Math.floor(diff / 86400)}D AGO`;
+            if (props._forceTimeLabel) {
+                timeStr = props._forceTimeLabel;
+                showLabel = true;
+            } else {
+                const tVal = props.time || props.start; // Fallback for various data types
+                let ms = 0;
+                // Parse time
+                if (typeof tVal === 'number') ms = tVal;
+                else if (typeof tVal === 'string') ms = new Date(tVal).getTime();
 
+                if (ms > 0 && !isNaN(ms)) {
+                    const diff = Math.floor((Date.now() - ms) / 1000);
+                    if (diff >= 60 && diff < 3600) timeStr = `${Math.floor(diff / 60)}M AGO`;
+                    else if (diff >= 3600 && diff < 86400) timeStr = `${Math.floor(diff / 3600)}H AGO`;
+                    else if (diff >= 86400) timeStr = `${Math.floor(diff / 86400)}D AGO`;
+                    showLabel = true;
+                }
+            }
+
+            if (showLabel) {
                 const timeLabel = document.createElement('div');
                 timeLabel.className = 'popup-time-label';
                 timeLabel.textContent = timeStr;
