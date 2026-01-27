@@ -102,9 +102,10 @@ const PROXY_TIMEOUT_MS = 15000;
  * @param {string} targetUrl - The URL to fetch
  * @param {object} options - Fetch options (optional)
  * @param {boolean} phpOnly - Skip third-party and go straight to PHP (optional)
+ * @param {boolean} thirdPartyOnly - Skip PHP proxy entirely, only use third-party CORS proxies (optional)
  * @returns {Promise<Response>} - Fetch response with proxySource property
  */
-async function fetchWithProxyChain(targetUrl, options = {}, phpOnly = false) {
+async function fetchWithProxyChain(targetUrl, options = {}, phpOnly = false, thirdPartyOnly = false) {
     const timeout = options.timeout || PROXY_TIMEOUT_MS;
 
     // Helper to fetch with timeout
@@ -151,33 +152,35 @@ async function fetchWithProxyChain(targetUrl, options = {}, phpOnly = false) {
         }
     }
 
-    // 2. Try PHP proxy as final fallback
-    try {
-        const phpUrl = PHP_PROXY + encodeURIComponent(targetUrl);
-        const response = await fetchWithTimeout(phpUrl, options);
-        if (response.ok) {
-            const text = await response.text();
-            // Check if PHP proxy returned an error object
-            if (text.startsWith('{') && text.includes('"error"')) {
-                const err = JSON.parse(text);
-                if (err.error) {
-                    console.warn(`FETCH: PHP proxy returned JSON error: ${err.error}`);
-                    throw new Error(err.error);
+    // 2. Try PHP proxy as final fallback (unless thirdPartyOnly is true)
+    if (!thirdPartyOnly) {
+        try {
+            const phpUrl = PHP_PROXY + encodeURIComponent(targetUrl);
+            const response = await fetchWithTimeout(phpUrl, options);
+            if (response.ok) {
+                const text = await response.text();
+                // Check if PHP proxy returned an error object
+                if (text.startsWith('{') && text.includes('"error"')) {
+                    const err = JSON.parse(text);
+                    if (err.error) {
+                        console.warn(`FETCH: PHP proxy returned JSON error: ${err.error}`);
+                        throw new Error(err.error);
+                    }
+                }
+                console.log('FETCH: PHP proxy success (fallback)');
+                const res = new Response(text, { status: 200, headers: response.headers });
+                res.proxySource = 'php';
+                return res;
+            } else {
+                const errText = await response.text();
+                console.warn(`FETCH: PHP proxy response not OK: ${response.status}. Body: ${errText.substring(0, 200)}`);
+                if (typeof logSystem === 'function') {
+                    logSystem(`ERR: PHP Proxy ${response.status} - ${errText.substring(0, 50)}`);
                 }
             }
-            console.log('FETCH: PHP proxy success (fallback)');
-            const res = new Response(text, { status: 200, headers: response.headers });
-            res.proxySource = 'php';
-            return res;
-        } else {
-            const errText = await response.text();
-            console.warn(`FETCH: PHP proxy response not OK: ${response.status}. Body: ${errText.substring(0, 200)}`);
-            if (typeof logSystem === 'function') {
-                logSystem(`ERR: PHP Proxy ${response.status} - ${errText.substring(0, 50)}`);
-            }
+        } catch (e) {
+            console.warn('FETCH: PHP proxy failed:', e.message);
         }
-    } catch (e) {
-        console.warn('FETCH: PHP proxy failed:', e.message);
     }
 
     // 3. All proxies failed
@@ -205,7 +208,7 @@ let isUpdatingData = false;
 
 // --- Global Data Worker Initialization (Shared) ---
 try {
-    window.dataWorker = new Worker('js/data-worker.js?v=111');
+    window.dataWorker = new Worker('js/data-worker.js?v=115');
     console.log('SYS: Global Data Worker initialized.');
 } catch (e) {
     console.error('SYS: Failed to initialize data worker:', e);

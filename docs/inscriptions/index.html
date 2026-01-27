@@ -7,7 +7,7 @@
     <title>GEOINT.WORLD // INSCRIPTIONS</title>
     <link rel="icon" type="image/png" href="../../favicon/favicon-32x32.png">
     <meta name="theme-color" content="#ff6800">
-    <link rel="stylesheet" href="../style.css?v=114">
+    <link rel="stylesheet" href="../style.css?v=115">
 </head>
 
 <body>
@@ -79,6 +79,61 @@
                     <p>The GEOINT Inscription Protocol allows users to permanently record geospatial data onto the
                         Solana blockchain, creating an immutable history of ephemeral events.</p>
 
+                    <h2>// HOW TO INSCRIBE DATA</h2>
+                    <p>Follow these steps to permanently inscribe any tracked event onto the Solana blockchain:</p>
+
+                    <ol style="color:#ccc; margin-left: 20px;">
+                        <li style="margin-bottom: 15px;">
+                            <strong>Connect Your Wallet:</strong> Click the wallet icon in the top-right corner of the
+                            map to open the wallet modal. Click <strong>CONNECT WALLET</strong> and approve the
+                            connection in your Solana wallet (Phantom or Solflare). Ensure you have at least
+                            <strong>~0.006 SOL</strong> (~$3 USD) in your wallet for the inscription fee.
+                        </li>
+                        <li style="margin-bottom: 15px;">
+                            <strong>Select a Data Point:</strong> On the map, click any active data point you want to
+                            inscribe—this could be a flight, ship, satellite, earthquake, radio station, LoRa mesh
+                            node, or any other tracked signal.
+                        </li>
+                        <li style="margin-bottom: 15px;">
+                            <strong>Upload to Chain:</strong> In the popup that appears, click the <strong>cloud upload
+                                button</strong> in the top-right corner of the popup. This initiates the
+                            inscription process.
+                        </li>
+                        <li style="margin-bottom: 15px;">
+                            <strong>Approve Transaction 1/2:</strong> Your wallet will prompt you to approve the first
+                            transaction. This swaps ~$3 worth of SOL for $GEOINT tokens. Approve this transaction.
+                        </li>
+                        <li style="margin-bottom: 15px;">
+                            <strong>Approve Transaction 2/2:</strong> Your wallet will prompt you again to approve the
+                            second transaction. This transaction:
+                            <ul style="margin-top: 8px; margin-left: 20px;">
+                                <li>Sends a small amount of SOL to the protocol</li>
+                                <li>Attaches the telemetry data (coordinates, timestamps, identifiers) to the
+                                    transaction via the SPL Memo Program</li>
+                                <li>Burns the $GEOINT tokens you just acquired</li>
+                            </ul>
+                        </li>
+                        <li style="margin-bottom: 15px;">
+                            <strong>Confirmation:</strong> Once both transactions are confirmed, you'll see a success
+                            message with the transaction signature. Your data is now permanently inscribed on the Solana
+                            blockchain!
+                        </li>
+                        <li style="margin-bottom: 10px;">
+                            <strong>Verification:</strong> You can view all inscribed data in the <strong>"LIVE
+                                FEED"</strong> section on the map, or verify any inscription on <a
+                                href="https://solscan.io/tx/4KFZ47ifcQGmhMCsJQVWv8EmmuhmVZmPkWPSMfLiksGD3bNW5Wv6qqW1wfmoADrida5crFne7XknZgjrXsASKVtH"
+                                target="_blank" style="color:#ff6800; text-decoration:underline;">Solscan</a> using the
+                            transaction
+                            signature.
+                        </li>
+                    </ol>
+
+                    <blockquote style="margin-top: 20px;">
+                        <strong>Note:</strong> The inscription fee (~$3 USD in SOL) covers the token swap, burn
+                        mechanism, and blockchain transaction fees. This creates a permanent, censorship-resistant
+                        record that will exist as long as the Solana blockchain operates.
+                    </blockquote>
+
                     <h2>// THE PROBLEM: EPHEMERALITY</h2>
                     <p>Most OSINT data is transient. Flight tracks are deleted after a few days. News articles are
                         edited or removed. Social media posts are deleted. When the server goes down, the history is
@@ -111,6 +166,12 @@
                     <p>All inscriptions are publicly verifiable. Each record contains a transaction signature that can
                         be viewed on any Solana block explorer (e.g., Solscan), proving the timestamp and integrity of
                         the data.</p>
+
+                    <p><strong>Example Inscription:</strong> <a
+                            href="https://solscan.io/tx/4KFZ47ifcQGmhMCsJQVWv8EmmuhmVZmPkWPSMfLiksGD3bNW5Wv6qqW1wfmoADrida5crFne7XknZgjrXsASKVtH"
+                            target="_blank" style="color:#ff6800; text-decoration:underline;">View on Solscan</a>.
+                        Scroll down to the <strong>Memo</strong> section to see the inscribed telemetry data
+                        (coordinates, timestamps, and identifiers).</p>
 
                 </section>
                 <div class="legal-footer">

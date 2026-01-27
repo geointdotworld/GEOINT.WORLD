@@ -14,9 +14,9 @@ exposeCache('debrisCache', () => debrisCache);
 
 async function fetchTLEGroup(group, label) {
     try {
-        const resp = await fetchData(`https://celestrak.org/NORAD/elements/gp.php?GROUP=${group}&FORMAT=tle`, { useProxy: true });
+        const resp = await fetchData(`https://celestrak.org/NORAD/elements/gp.php?GROUP=${group}&FORMAT=tle`, { useProxy: true, thirdPartyOnly: true });
         const proxySource = resp.proxySource;
-        const sourceLabel = proxySource === 'php' ? 'BACKEND' : (proxySource ? `THIRD-PARTY (${proxySource})` : 'UNKNOWN');
+        const sourceLabel = proxySource ? `THIRD-PARTY (${proxySource})` : 'DIRECT';
         logSystem(`NET: ${label} (CelesTrak) via ${sourceLabel}`);
         if (!resp.ok) return [];
 
@@ -73,11 +73,11 @@ async function fetchSpace() {
 
         // Fetch Active Satellites - only if satellites toggle is enabled
         if (satellitesToggle && satellitesToggle.checked && (!tleCache || (now - lastTleFetch > 3600000))) {
-            const resp = await fetchData('https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle', { useProxy: true });
+            const resp = await fetchData('https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle', { useProxy: true, thirdPartyOnly: true });
 
             // Log which proxy was used
             const proxySource = resp.proxySource;
-            const sourceLabel = proxySource === 'php' ? 'BACKEND' : (proxySource ? `THIRD-PARTY (${proxySource})` : 'UNKNOWN');
+            const sourceLabel = proxySource ? `THIRD-PARTY (${proxySource})` : 'DIRECT';
             logSystem(`NET: Satellites (CelesTrak) via ${sourceLabel}`);
 
             // Check if toggle was turned off during fetch

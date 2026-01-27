@@ -193,12 +193,13 @@ function updateLoadingStatus(text, className = 'text-dim') {
 
 // --- Centralized Fetch Utility ---
 // Set useProxy: true to route through proxy chain (third-party first, PHP fallback)
+// Set thirdPartyOnly: true to skip PHP proxy entirely and only use third-party CORS proxies
 async function fetchData(url, options = {}) {
-    const { useProxy = false, phpOnly = false, ...fetchOptions } = options;
+    const { useProxy = false, phpOnly = false, thirdPartyOnly = false, ...fetchOptions } = options;
 
     if (useProxy && typeof fetchWithProxyChain === 'function') {
         // Use the proxy chain from globals.js (third-party first, PHP fallback)
-        return fetchWithProxyChain(url, fetchOptions, phpOnly);
+        return fetchWithProxyChain(url, fetchOptions, phpOnly, thirdPartyOnly);
     }
 
     // Direct fetch (no proxy)

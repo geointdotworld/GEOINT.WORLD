@@ -70,7 +70,7 @@ window.addEventListener('resize', throttledMaxHeight);
 let liveFeedModulePromise;
 async function loadLiveFeedModule() {
     if (!liveFeedModulePromise) {
-        liveFeedModulePromise = import('./livefeed.js?v=111').then(module => {
+        liveFeedModulePromise = import('./livefeed.js?v=115').then(module => {
             // Auto-init MemoSender to pre-fetch prices
             if (module.MemoSender && typeof module.MemoSender.init === 'function') {
                 module.MemoSender.init();
@@ -103,8 +103,8 @@ function loadScript(src) {
 let meshScriptsPromise;
 function ensureMeshScripts() {
     if (meshScriptsPromise) return meshScriptsPromise;
-    meshScriptsPromise = loadScript('js/repeaters.js?v=111')
-        .then(() => loadScript('js/mesh.js?v=111'))
+    meshScriptsPromise = loadScript('js/repeaters.js?v=115')
+        .then(() => loadScript('js/mesh.js?v=115'))
         .catch(err => { logSystem?.(`ERR: Mesh/Repeater scripts failed - ${err.message}`); throw err; });
     return meshScriptsPromise;
 }
