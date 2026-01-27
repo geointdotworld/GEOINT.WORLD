@@ -13,32 +13,46 @@ exposeCache('debrisCache', () => debrisCache);
 
 
 async function fetchTLEGroup(group, label) {
+    let text = '';
+
     try {
         const resp = await fetchData(`https://celestrak.org/NORAD/elements/gp.php?GROUP=${group}&FORMAT=tle`, { useProxy: true, thirdPartyOnly: true });
-        const proxySource = resp.proxySource;
-        const sourceLabel = proxySource ? `THIRD-PARTY (${proxySource})` : 'DIRECT';
-        logSystem(`NET: ${label} (CelesTrak) via ${sourceLabel}`);
-        if (!resp.ok) return [];
-
-        const text = await resp.text();
-        const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
-
-        const tleData = [];
-        for (let i = 0; i < lines.length; i += 3) {
-            if (i + 2 < lines.length) {
-                tleData.push({
-                    name: lines[i].trim(),
-                    line1: lines[i + 1].trim(),
-                    line2: lines[i + 2].trim(),
-                    category: label
-                });
-            }
+        if (resp.ok) {
+            text = await resp.text();
+            const proxySource = resp.proxySource || 'DIRECT';
+            logSystem(`NET: ${label} (CelesTrak) via ${proxySource}`);
+        } else {
+            throw new Error(`Status ${resp.status}`);
         }
-        return tleData;
-    } catch (e) {
-        console.error(`Error fetching ${label}:`, e);
-        return [];
+    } catch (e1) {
+        // Fallback: CodeTabs
+        try {
+            logSystem(`NET: ${label} (Fallback to CodeTabs)...`);
+            const fallbackUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(`https://celestrak.org/NORAD/elements/gp.php?GROUP=${group}&FORMAT=tle`)}`;
+            const resp = await fetch(fallbackUrl);
+            if (!resp.ok) throw new Error(`CodeTabs ${resp.status}`);
+            text = await resp.text();
+            logSystem(`NET: ${label} restored via CodeTabs.`);
+        } catch (e2) {
+            console.error(`Error fetching ${label}:`, e1, e2);
+            return [];
+        }
     }
+
+    const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+
+    const tleData = [];
+    for (let i = 0; i < lines.length; i += 3) {
+        if (i + 2 < lines.length) {
+            tleData.push({
+                name: lines[i].trim(),
+                line1: lines[i + 1].trim(),
+                line2: lines[i + 2].trim(),
+                category: label
+            });
+        }
+    }
+    return tleData;
 }
 
 function categorizeSatellite(name) {
@@ -73,12 +87,28 @@ async function fetchSpace() {
 
         // Fetch Active Satellites - only if satellites toggle is enabled
         if (satellitesToggle && satellitesToggle.checked && (!tleCache || (now - lastTleFetch > 3600000))) {
-            const resp = await fetchData('https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle', { useProxy: true, thirdPartyOnly: true });
-
-            // Log which proxy was used
-            const proxySource = resp.proxySource;
-            const sourceLabel = proxySource ? `THIRD-PARTY (${proxySource})` : 'DIRECT';
-            logSystem(`NET: Satellites (CelesTrak) via ${sourceLabel}`);
+            let text = '';
+            try {
+                const resp = await fetchData('https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle', { useProxy: true, thirdPartyOnly: true });
+                if (resp.ok) {
+                    text = await resp.text();
+                    const proxySource = resp.proxySource || 'DIRECT';
+                    logSystem(`NET: Satellites (CelesTrak) via ${proxySource}`);
+                } else {
+                    throw new Error(`Status ${resp.status}`);
+                }
+            } catch (e1) {
+                console.warn('Primary satellite fetch failed, trying CodeTabs...', e1);
+                try {
+                    const fallbackUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle')}`;
+                    const resp = await fetch(fallbackUrl);
+                    if (!resp.ok) throw new Error(`CodeTabs ${resp.status}`);
+                    text = await resp.text();
+                    logSystem(`NET: Satellites restored via CodeTabs.`);
+                } catch (e2) {
+                    throw new Error(`Both primary and CodeTabs failed: ${e2.message}`);
+                }
+            }
 
             // Check if toggle was turned off during fetch
             if (!spaceToggle || !spaceToggle.checked) {
@@ -87,18 +117,6 @@ async function fetchSpace() {
                 return;
             }
 
-            if (!resp.ok) {
-                const errorText = await resp.text();
-                console.error('CelesTrak API Error:', {
-                    status: resp.status,
-                    statusText: resp.statusText,
-                    url: resp.url,
-                    response: errorText
-                });
-                throw new Error(`CelesTrak API ${resp.status}: ${resp.statusText}`);
-            }
-
-            const text = await resp.text();
             const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
 
             const tleData = [];
@@ -334,4 +352,48 @@ function updateSatelliteFilterCounts() {
 }
 
 // Expose function globally
-window.updateSatelliteFilterCounts = updateSatelliteFilterCounts;
+
+// Register with InscriptionRegistry
+if (window.InscriptionRegistry) {
+    window.InscriptionRegistry.register('space-objects', {
+        hydrate: (data) => {
+            if (typeof map === 'undefined' || !map) return null;
+            const features = map.querySourceFeatures('space-data');
+            // Try matching ID
+            if (data.id) {
+                return features.find(f => f.properties.id == data.id)?.properties;
+            }
+            if (data.name) {
+                return features.find(f => f.properties.name == data.name)?.properties;
+            }
+            return null;
+        },
+        getMarker: (data) => {
+            const svgs = {
+                space: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><rect x="9" y="8" width="6" height="8" fill="#fff"/><rect x="1" y="9" width="6" height="6" fill="#fff"/><rect x="7" y="11" width="2" height="2" fill="#fff"/><rect x="17" y="9" width="6" height="6" fill="#fff"/><rect x="15" y="11" width="2" height="2" fill="#fff"/><rect x="11.5" y="4" width="1" height="4" fill="#fff"/><circle cx="12" cy="4" r="2" fill="#fff"/></svg>`
+            };
+            return {
+                html: svgs.space,
+                style: {
+                    width: '24px',
+                    height: '24px'
+                }
+            };
+        },
+        showPopup: (data, coords) => {
+            const html = `
+                <div class="popup-row"><span class="popup-label">NAME:</span> ${data.name || 'Unknown'}</div>
+                <div class="popup-row"><span class="popup-label">ID:</span> ${data.id || 'N/A'}</div>
+                <div class="popup-row"><span class="popup-label">TYPE:</span> ${data.category || 'SATELLITE'}</div>
+                <div class="popup-row"><span class="popup-label">ALT:</span> ${data.altitude || (data.altitudeRaw ? Math.round(data.altitudeRaw) + ' km' : 'N/A')}</div>
+                <div class="popup-row"><span class="popup-label">SPEED:</span> ${data.velocity || (data.velocityRaw ? data.velocityRaw.toFixed(2) + ' km/s' : 'N/A')}</div>
+                <div style="margin-top:10px; text-align:center;">
+                    <a href="https://www.n2yo.com/satellite/?s=${data.id}" target="_blank" class="intel-btn">[ TRACK ORBIT ]</a>
+                </div>
+            `;
+            if (window.createPopup) {
+                window.createPopup(coords, html, data, 'space-popup', { className: 'cyber-popup' });
+            }
+        }
+    });
+}

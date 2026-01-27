@@ -107,172 +107,11 @@ const MemoFeed = {
         return `${dy} day${dy > 1 ? 's' : ''} ago`;
     },
 
-    // Check if entity type has data loaded (via toggle state)
-    isEntityOnMap(data) {
-        if (typeof map === 'undefined' || !map) return false;
 
-        // Simple approach: if the toggle is ON, assume data is loaded
-        // This is more reliable than trying to query map sources
-        if (data.type === 'flights') {
-            const toggle = document.getElementById('flight-toggle');
-            const isOn = toggle && toggle.checked;
-            console.log(`LOCATE: Flights toggle is ${isOn ? 'ON' : 'OFF'}`);
-            return isOn;
-        }
-        if (data.type === 'ships' || data.type === 'ships-dots') {
-            const toggle = document.getElementById('ship-toggle');
-            const isOn = toggle && toggle.checked;
-            console.log(`LOCATE: Ships toggle is ${isOn ? 'ON' : 'OFF'}`);
-            return isOn;
-        }
-        if (data.type === 'earthquake-circles') {
-            const toggle = document.getElementById('earthquake-toggle');
-            const isOn = toggle && toggle.checked;
-            console.log(`LOCATE: Earthquake toggle is ${isOn ? 'ON' : 'OFF'}`);
-            return isOn;
-        }
-        if (data.type === 'space-objects') {
-            const toggle = document.getElementById('space-toggle');
-            const isOn = toggle && toggle.checked;
-            console.log(`LOCATE: Space toggle is ${isOn ? 'ON' : 'OFF'}`);
-            return isOn;
-        }
-        return false;
-    },
 
-    // Temporary marker reference
-    currentMarker: null,
 
-    // Add a visual marker for located items
-    addTemporaryMarker(data, coords) {
-        if (this.currentMarker) {
-            this.currentMarker.remove();
-            this.currentMarker = null;
-        }
 
-        const el = document.createElement('div');
-        el.className = 'temp-marker';
 
-        // SVGs matching map.js
-        const svgs = {
-            plane: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="#fff" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>`,
-            helo: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="#00ccff" d="M12,2L14.5,6H18V8H14.5L14,10H17V12H14V17H10V12H7V10H10L9.5,8H6V6H9.5L12,2M12,13C13.1,13 14,13.9 14,15C14,16.1 13.1,17 12,17C10.9,17 10,16.1 10,15C10,13.9 10.9,13 12,13M2,9V11H5V9H2M19,9V11H22V9H19Z"/></svg>`,
-            ship: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M12,2L8,6H16L12,2M12,6L8,10H16L12,6M3,12L5,14H19L21,12H3M3,15L5,17H19L21,15H3M3,18L5,20H19L21,18H3Z"/></svg>`,
-            space: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><rect x="9" y="8" width="6" height="8" fill="#fff"/><rect x="1" y="9" width="6" height="6" fill="#fff"/><rect x="7" y="11" width="2" height="2" fill="#fff"/><rect x="17" y="9" width="6" height="6" fill="#fff"/><rect x="15" y="11" width="2" height="2" fill="#fff"/><rect x="11.5" y="4" width="1" height="4" fill="#fff"/><circle cx="12" cy="4" r="2" fill="#fff"/></svg>`,
-            radio: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><circle cx="12" cy="12" r="2" fill="#ff6800"/><path d="M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z" fill="#ff6800"/></svg>`
-        };
-
-        // Default marker style
-        el.style.width = '24px';
-        el.style.height = '24px';
-
-        let html = '';
-
-        if (data.type === 'flights') {
-            const isHelo = (data.cat === 8 || (data.callsign && (data.callsign.includes("HELO") || data.callsign.includes("POLICE"))));
-            const heading = data.heading || 0;
-            html = isHelo ? svgs.helo : svgs.plane;
-            // Apply rotation
-            el.style.transform = `rotate(${heading}deg)`;
-            el.innerHTML = html;
-        }
-        else if (data.type === 'ships' || data.type === 'ships-dots') {
-            // Determine color
-            let color = '#0088ff';
-            if (data.event === 'gap') color = '#ff3333';
-            else if (data.event === 'encounter') color = '#ff00ff';
-            else if (data.event === 'loitering') color = '#ff6800';
-            else if (data.event === 'fishing') color = '#00ffcc';
-
-            el.style.color = color;
-            el.innerHTML = svgs.ship;
-        }
-        else if (data.type === 'space-objects') {
-            el.innerHTML = svgs.space;
-        }
-        else if (data.type === 'radio-stations' || data.type === 'repeaters') {
-            el.innerHTML = svgs.radio;
-        }
-        else if (data.type === 'earthquake-circles') {
-            // Earthquakes are usually circles
-            const mag = data.mag || 0;
-            let color = '#fbbf24';
-            if (mag >= 7.0) color = '#991b1b';
-            else if (mag >= 6.0) color = '#dc2626';
-            else if (mag >= 5.0) color = '#ef4444';
-            else if (mag >= 4.0) color = '#fb923c';
-
-            el.style.width = '14px';
-            el.style.height = '14px';
-            el.style.backgroundColor = color;
-            el.style.borderRadius = '50%';
-            el.style.border = '2px solid white';
-            el.style.boxShadow = '0 0 5px ' + color;
-        } else {
-            // Generic fallback
-            el.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff0000" stroke-width="2"><circle cx="12" cy="12" r="6"/><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>`;
-        }
-
-        this.currentMarker = new maplibregl.Marker({ element: el })
-            .setLngLat(coords)
-            .addTo(map);
-
-        // Remove marker when popup closes
-        const checkPopup = setInterval(() => {
-            if (!document.querySelector('.maplibregl-popup')) {
-                if (this.currentMarker) {
-                    this.currentMarker.remove();
-                    this.currentMarker = null;
-                }
-                clearInterval(checkPopup);
-            }
-        }, 1000);
-    },
-
-    // Find if this entity exists in loaded map sources and return full properties
-    findMatchingFeature(data) {
-        if (!map) return null;
-        try {
-            let features = [];
-
-            if (data.type === 'earthquake-circles') {
-                // Earthquakes: fuzzy match on loc/mag
-                // 1. Try global data array if available
-                features = (typeof window.earthquakeData !== 'undefined') ? window.earthquakeData : [];
-                // 2. Fallback to map source
-                if ((!features || !features.length) && map.getSource('earthquake-data')) {
-                    const source = map.getSource('earthquake-data');
-                    if (source._data && source._data.features) features = source._data.features;
-                }
-                // 3. Fallback to viewport
-                if (!features || !features.length) features = map.querySourceFeatures('earthquake-data');
-                return features.find(f => {
-                    const p = f.properties;
-                    const coords = f.geometry.coordinates;
-
-                    // Match logic: Relax mag check if data.mag is missing (parse error fallback)
-                    const magVal = Number(data.mag);
-                    const magMatch = isNaN(magVal) ? true : Math.abs(Number(p.mag) - magVal) < 0.5;
-
-                    return magMatch &&
-                        Math.abs(coords[0] - parseFloat(data.lng)) < 0.05 &&
-                        Math.abs(coords[1] - parseFloat(data.lat)) < 0.05;
-                })?.properties;
-            }
-
-            if (data.type === 'flights') {
-                features = map.querySourceFeatures('opensky-data');
-                return features.find(f => f.properties.icao == data.icao)?.properties;
-            }
-
-            if (data.type === 'ships' || data.type === 'ships-dots') {
-                features = map.querySourceFeatures('gfw-data');
-                return features.find(f => f.properties.ssvid == data.mmsi)?.properties;
-            }
-
-        } catch (e) { console.warn('Feature lookup failed', e); }
-        return null;
-    },
 
     // Unified Locate Handler
     locate(encodedJson, signature, timestamp, timeLabel) {
@@ -311,47 +150,11 @@ const MemoFeed = {
                 const coords = [parseFloat(data.lng), parseFloat(data.lat)];
                 ModalManager.close('live-feed-modal');
 
-                // 2. Try to hydrate with rich data from map
-                const existingProps = this.findMatchingFeature(data);
-
-                if (existingProps) {
-                    console.log('LOCATE: Found existing feature, hydrating...');
-                    // Use rich properties but keep signature/type AND live feed markers
-                    data = {
-                        ...existingProps,
-                        signature: signature,
-                        type: data.type,
-                        _fromLiveFeed: true,
-                        _forceTimeLabel: data._forceTimeLabel,
-                        time: data.time // Prefer feed time for consistency with label
-                    };
+                // Delegate to Centralized Registry
+                if (window.InscriptionRegistry) {
+                    window.InscriptionRegistry.handle(data, coords);
                 } else {
-                    console.log('LOCATE: No existing feature, using memo data');
-                    // Add visual marker only if NOT on map
-                    // FIX: Always add temporary marker if feature not found, even if layer is on (it might be old data)
-                    this.addTemporaryMarker(data, coords);
-                }
-
-                // FINAL SANITIZATION: Cast types strictly before usage
-                if (data.mag !== undefined) data.mag = parseFloat(data.mag);
-                if (data.depth !== undefined) data.depth = parseFloat(data.depth);
-                if (data.time !== undefined) data.time = Number(data.time);
-
-                console.log('LOCATE: Final Payload:', data);
-
-                // 3. Trigger Handlers
-                if (data.type === 'earthquake-circles' && typeof showEarthquakePopup === 'function') {
-                    showEarthquakePopup(data, coords);
-                }
-                else if (window.mapClickHandlers && window.mapClickHandlers[data.type]) {
-                    window.mapClickHandlers[data.type](data, coords);
-                }
-                else {
-                    // Fallback using createPopup (supports time-ago)
-                    const html = `<div class='popup-row'>LOCATED SIGNAL</div>` +
-                        (window.createTrackedPopup ? '' : `<div class="popup-row"><a href="https://solscan.io/tx/${signature}" target="_blank" class="intel-btn" style="margin-top:10px">[ VIEW ON SOLSCAN ]</a></div>`);
-
-                    window.createPopup(coords, html, data, 'generic', { className: 'cyber-popup' });
+                    console.error("InscriptionRegistry not found!");
                 }
             } else {
                 alert('No coordinates found in this inscription');
@@ -915,10 +718,30 @@ const MemoSender = {
     FEE_USD: 3,
     cachedSolPrice: null,
     lastPriceFetch: 0,
+    cachedCurveData: null,
+    lastCurveFetch: 0,
 
     init() {
         // Fire-and-forget price fetch on load
         this.getSolPrice().catch(e => console.warn('Background price fetch failed', e));
+    },
+
+    async preFetch() {
+        try {
+            // Warm up SOL price
+            this.getSolPrice().catch(() => { });
+            // Warm up RPC route (Sticky logic inside rpcWithProxyChain)
+            this.rpc('getLatestBlockhash', [{ commitment: 'confirmed' }]).catch(() => { });
+            // Warm up bonding curve data
+            if (solanaWeb3 && this.CFG && this.CFG.BURN_TOKEN) {
+                const mint = new solanaWeb3.PublicKey(this.CFG.BURN_TOKEN);
+                const curve = this.getBondingCurvePDA(mint);
+                this.getBondingCurveData(curve).catch(() => { });
+            }
+            console.log("MEMO: Pre-fetch started in background.");
+        } catch (e) {
+            console.warn("MEMO: Pre-fetch setup failed:", e);
+        }
     },
 
     async getSolPrice() {
@@ -1026,16 +849,29 @@ const MemoSender = {
     },
 
     async getBondingCurveData(bondingCurve) {
+        const now = Date.now();
+        const addr = bondingCurve.toString();
+
+        // Cache for 60 seconds (curve data changes with every trade, but ~instant preference)
+        if (this.cachedCurveData && this.cachedCurveData.addr === addr && (now - this.lastCurveFetch < 60000)) {
+            return this.cachedCurveData.data;
+        }
+
         try {
-            const info = await this.rpc('getAccountInfo', [bondingCurve.toString(), { encoding: 'base64' }]);
+            const info = await this.rpc('getAccountInfo', [addr, { encoding: 'base64' }]);
             if (!info?.value?.data) return null;
             const data = this.base64ToUint8Array(info.value.data[0]);
             const view = new DataView(data.buffer);
-            return {
+            const curveData = {
                 virtualTokenReserves: view.getBigUint64(8, true),
                 virtualSolReserves: view.getBigUint64(16, true),
                 complete: data[48] === 1
             };
+
+            this.cachedCurveData = { addr, data: curveData };
+            this.lastCurveFetch = now;
+
+            return curveData;
         } catch (e) {
             console.error('getBondingCurveData error:', e);
             throw e;

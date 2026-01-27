@@ -70,7 +70,7 @@ window.addEventListener('resize', throttledMaxHeight);
 let liveFeedModulePromise;
 async function loadLiveFeedModule() {
     if (!liveFeedModulePromise) {
-        liveFeedModulePromise = import('./livefeed.js?v=119').then(module => {
+        liveFeedModulePromise = import('./livefeed.js?v=120').then(module => {
             // Auto-init MemoSender to pre-fetch prices
             if (module.MemoSender && typeof module.MemoSender.init === 'function') {
                 module.MemoSender.init();
@@ -103,8 +103,8 @@ function loadScript(src) {
 let meshScriptsPromise;
 function ensureMeshScripts() {
     if (meshScriptsPromise) return meshScriptsPromise;
-    meshScriptsPromise = loadScript('js/repeaters.js?v=117')
-        .then(() => loadScript('js/mesh.js?v=117'))
+    meshScriptsPromise = loadScript('js/repeaters.js?v=120')
+        .then(() => loadScript('js/mesh.js?v=120'))
         .catch(err => { logSystem?.(`ERR: Mesh/Repeater scripts failed - ${err.message}`); throw err; });
     return meshScriptsPromise;
 }
@@ -637,22 +637,29 @@ window.createPopup = (lngLat, html, props = {}, layer = 'generic', opts = {}) =>
         sendBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" /><path d="M12 12v9" /><path d="m16 16-4-4-4 4" /></svg>';
         sendBtn.onclick = async (e) => {
             e.stopPropagation();
-            sendBtn.style.opacity = '0.5';
-            sendBtn.style.pointerEvents = 'none';
-            // Note: MemoSender relies on having props. If undefined, it might fail. Only createPopup calls with props should use this.
 
             try {
                 const { MemoSender } = await loadLiveFeedModule();
-                const result = await MemoSender?.send(props, layer, lngLat);
+                const WalletManager = window.WalletManager;
 
-                setTimeout(() => {
-                    sendBtn.style.opacity = '';
-                    sendBtn.style.pointerEvents = '';
-                    if (result) {
-                        sendBtn.style.color = '#00ff00';
-                        setTimeout(() => sendBtn.style.color = '', 2000);
-                    }
-                }, 500);
+                // Logic: If wallet is connected, show confirmation. 
+                // Otherwise, call send() directly which triggers connection flow.
+                if (WalletManager && WalletManager.wallet && WalletManager.pubkey && window.showInscriptionConfirmation) {
+                    window.showInscriptionConfirmation(props, layer, lngLat, MemoSender);
+                } else {
+                    sendBtn.style.opacity = '0.5';
+                    sendBtn.style.pointerEvents = 'none';
+                    const result = await MemoSender?.send(props, layer, lngLat);
+
+                    setTimeout(() => {
+                        sendBtn.style.opacity = '';
+                        sendBtn.style.pointerEvents = '';
+                        if (result) {
+                            sendBtn.style.color = '#00ff00';
+                            setTimeout(() => sendBtn.style.color = '', 2000);
+                        }
+                    }, 500);
+                }
             } catch (err) {
                 console.error("Failed to load MemoSender:", err);
                 sendBtn.style.opacity = '';

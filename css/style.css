@@ -133,6 +133,8 @@ body {
 #trackable-header {
     cursor: pointer;
     -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
     user-select: none;
     padding: 8px 15px;
     margin: -15px -15px 0px -15px;
@@ -156,6 +158,8 @@ body {
 #communications-header {
     cursor: pointer;
     -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
     user-select: none;
     padding: 8px 15px;
     margin: -12px -15px 0px -15px;
@@ -179,6 +183,8 @@ body {
 #news-feed-header {
     cursor: pointer;
     -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
     user-select: none;
     padding: 8px 15px;
     margin: -12px -15px 0px -15px;
@@ -202,6 +208,8 @@ body {
 #natural-header {
     cursor: pointer;
     -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
     user-select: none;
     padding: 8px 15px;
     margin: -12px -15px 0px -15px;
@@ -318,6 +326,8 @@ body {
     font-size: 12px;
     font-weight: bold;
     -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
     user-select: none;
     position: relative;
     flex: 1 1 0;
@@ -3656,17 +3666,18 @@ input[type="range"]:focus::-webkit-slider-thumb {
 
 input[type="range"]:focus::-moz-range-thumb {
     box-shadow: 0 0 8px rgba(255, 104, 0, 1);
-}/ *   P o p u p   T i m e   L a b e l   -   H e a d e r   T o p   L e f t   * /  
- . p o p u p - t i m e - l a b e l   {  
-         p o s i t i o n :   a b s o l u t e ;  
-         t o p :   8 p x ;  
-         l e f t :   1 2 p x ;  
-         f o n t - s i z e :   1 2 p x ;  
-         f o n t - w e i g h t :   b o l d ;  
-         c o l o r :   # 8 8 8 ;  
-         f o n t - f a m i l y :   ' C o u r i e r   N e w ' ,   m o n o s p a c e ;  
-         z - i n d e x :   1 0 ;  
-         p o i n t e r - e v e n t s :   n o n e ;  
-         t e x t - s h a d o w :   0   1 p x   2 p x   r g b a ( 0 ,   0 ,   0 ,   0 . 8 ) ;  
- }  
- 
+}
+
+/* Popup Time Label - Header Top Left */
+.popup-time-label {
+    position: absolute;
+    top: 8px;
+    left: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #888;
+    font-family: 'Courier New', monospace;
+    z-index: 10;
+    pointer-events: none;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}

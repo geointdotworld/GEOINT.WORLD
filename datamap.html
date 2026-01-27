@@ -14,7 +14,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/satellite.js/5.0.0/satellite.min.js" defer></script>
     <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js" defer></script>
     <link href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css" rel="stylesheet" />
-    <link rel="stylesheet" href="css/style.css?v=117">
+    <link rel="stylesheet" href="css/style.css?v=120">
     <script>
         window.onerror = function (msg, url, lineNo, columnNo, error) {
             const message = `[GLOBAL ERROR] ${msg} at ${url}:${lineNo}:${columnNo}`;
@@ -107,6 +107,22 @@
             pointer-events: auto !important;
             touch-action: manipulation !important;
         }
+
+    }
+
+    /* Custom Button Overrides for Inscription Modal */
+    #inscription-cancel-btn:hover,
+    #inscription-cancel-btn:active {
+        background: #ff3333 !important;
+        color: #000 !important;
+        box-shadow: 0 0 15px #ff3333 !important;
+    }
+
+    #inscription-upload-btn:hover,
+    #inscription-upload-btn:active {
+        background: #00ff00 !important;
+        color: #000 !important;
+        box-shadow: 0 0 15px #00ff00 !important;
     }
 </style>
 
@@ -1431,8 +1447,6 @@
                         <button id="step-btn" class="step-btn">±10s</button>
                     </div>
                 </div>
-
-
             </div>
         </div>
     </div>
@@ -1492,21 +1506,55 @@
         </div>
     </div>
 
+    <!-- INSCRIPTION CONFIRM MODAL -->
+    <div id="inscription-confirm-modal" class="modal" style="z-index: 10000;">
+        <div class="modal-content" style="height: auto; max-height: 80vh; overflow-y: auto;">
+            <div class="panel-header"
+                style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                <span>// CONFIRM INSCRIPTION</span>
+                <span id="close-inscription-confirm-btn" class="cursor-pointer">[X]</span>
+            </div>
+            <div class="panel-content">
+                <p class="modal-desc-text">You are about to inscribe the following data to the Solana blockchain. This
+                    action is permanent and incurs a fee.</p>
+                <div id="inscription-confirm-data" style="
+                    background: rgba(0,0,0,0.5); 
+                    border: 1px solid #331a00; 
+                    padding: 10px; 
+                    margin: 10px 0; 
+                    font-family: 'Courier New', monospace; 
+                    font-size: 11px; 
+                    color: #ffcc00; 
+                    white-space: pre-wrap; 
+                    max-height: 200px; 
+                    overflow-y: auto;"></div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 15px;">
+                    <button id="inscription-cancel-btn" class="intel-btn"
+                        style="border-color: #ff3333; color: #ff3333;">CANCEL</button>
+                    <button id="inscription-upload-btn" class="intel-btn"
+                        style="border-color: #00ff00; color: #00ff00;">CONFIRM UPLOAD</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="map"></div>
 
     <!-- JS Modules -->
-    <script src="js/utils.js?v=117"></script>
-    <script src="js/globals.js?v=117" defer></script>
-    <script src="js/flights.js?v=117" defer></script>
-    <script src="js/space.js?v=117" defer></script>
-    <script src="js/ships.js?v=117" defer></script>
-    <script src="js/radio.js?v=117" defer></script>
-    <script src="js/cables.js?v=117" defer></script>
-    <script src="js/map.js?v=118" defer></script>
-    <script src="js/ui.js?v=119" defer></script>
-    <script src="js/news.js?v=117" defer></script>
-    <script src="js/polymarket.js?v=117" defer></script>
-    <script src="js/earthquakes.js?v=117" defer></script>
+    <script src="js/inscriptions.js"></script>
+    <script src="js/livefeed.js"></script>
+    <script src="js/utils.js?v=120"></script>
+    <script src="js/globals.js?v=120" defer></script>
+    <script src="js/flights.js?v=120" defer></script>
+    <script src="js/space.js?v=120" defer></script>
+    <script src="js/ships.js?v=120" defer></script>
+    <script src="js/radio.js?v=120" defer></script>
+    <script src="js/cables.js?v=120" defer></script>
+    <script src="js/map.js?v=120" defer></script>
+    <script src="js/ui.js?v=120" defer></script>
+    <script src="js/news.js?v=120" defer></script>
+    <script src="js/polymarket.js?v=120" defer></script>
+    <script src="js/earthquakes.js?v=120" defer></script>
 
 </body>
 

@@ -1,0 +1,81 @@
+# GEOINT.WORLD ROBOTS.TXT 
+
+# SEARCH ENGINES - STANDARD
+User-agent: *
+Content-Signal: search=yes,ai-train=yes
+Allow: /
+
+# AI CRAWLERS - EXPLICIT ALLOW
+
+#  LLMs-Txt: https://geoint.world/llms.txt
+
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+# BLOCK LOW-VALUE PAGES 
+Disallow: /admin/
+Disallow: /proxy.php
+Disallow: /wp-admin/
+Disallow: /wp-login.php
+Disallow: /cart/
+Disallow: /checkout/
+Disallow: /add-to-cart/
+Disallow: /login/
+Disallow: /account/
+Disallow: /user/
+Disallow: /*?sort=
+Disallow: /*?filter=
+Disallow: /*?session_id=
+Disallow: /*?utm_
+Disallow: /?s=
+Disallow: /search/
+Disallow: /temp/
+Disallow: /test/
+Disallow: /?p=*
+Disallow: /*?page=
+Disallow: /*?fbclid=
+
+# PRIORITY CONTENT
+Allow: /docs/
+Allow: /ca/
+Allow: /favicon/
+Allow: /whitepaper.pdf
+Allow: /assets/
+Allow: /css/
+Allow: /js/
+Allow: /images/
+Allow: /*.css$
+Allow: /*.js$
+
+
+# SITEMAPS
+Sitemap: https://geoint.world/sitemap.xml
+
+# AI CRAWLER CONTEXT
+# llms.txt provides structured context for AI models
+LLMs-Txt: https://geoint.world/llms.txt

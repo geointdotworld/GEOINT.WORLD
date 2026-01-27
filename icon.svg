@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <style>
+    .icon-fill {
+      fill: #ff6800; /* GEOINT orange - works in both modes */
+    }
+    @media (prefers-color-scheme: dark) {
+      .icon-fill {
+        fill: #ff6800; /* Keep orange in dark mode for brand consistency */
+      }
+    }
+  </style>
+  <!-- Globe/World icon representing GEOINT -->
+  <circle class="icon-fill" cx="16" cy="16" r="14" fill-opacity="0.1"/>
+  <circle class="icon-fill" cx="16" cy="16" r="14" fill="none" stroke="#ff6800" stroke-width="1.5"/>
+  <ellipse class="icon-fill" cx="16" cy="16" rx="6" ry="14" fill="none" stroke="#ff6800" stroke-width="1"/>
+  <line x1="2" y1="16" x2="30" y2="16" stroke="#ff6800" stroke-width="1"/>
+  <line x1="16" y1="2" x2="16" y2="30" stroke="#ff6800" stroke-width="0.5"/>
+  <circle cx="16" cy="16" r="3" fill="#ff6800"/>
+</svg>

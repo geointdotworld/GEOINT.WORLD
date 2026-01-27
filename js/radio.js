@@ -615,3 +615,39 @@ Object.defineProperty(window, 'radioAudio', {
     enumerable: false,
     configurable: true
 });
+
+// Register with InscriptionRegistry
+if (window.InscriptionRegistry) {
+    window.InscriptionRegistry.register('radio-stations', {
+        hydrate: (data) => {
+            if (typeof map === 'undefined' || !map) return null;
+            const features = map.querySourceFeatures('radio-data');
+            if (data.id) {
+                return features.find(f => f.properties.id == data.id)?.properties;
+            }
+            if (data.name) {
+                return features.find(f => f.properties.name == data.name)?.properties;
+            }
+            return null;
+        },
+        getMarker: (data) => {
+            return {
+                html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="#00ff00" d="M12,10A2,2 0 0,1 14,12C14,10.89 13.1,10 12,10M12,16A2,2 0 0,1 10,14C10,15.1 10.9,16 12,16M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2Z"/></svg>`,
+                style: { width: '24px', height: '24px' }
+            };
+        },
+        showPopup: (data, coords) => {
+            const html = `
+                <div class="popup-row"><span class="popup-label">STATION:</span> ${data.name || 'Unknown'}</div>
+                <div class="popup-row"><span class="popup-label">COUNTRY:</span> ${data.country || 'N/A'}</div>
+                <div class="popup-row"><span class="popup-label">TAGS:</span> ${data.tags || 'N/A'}</div>
+                <div style="margin-top:10px; text-align:center;">
+                    <button class="intel-btn radio-play-btn" onclick='window.playRadioStation(window.currentPopupFeature)'>PLAY</button>
+                </div>
+            `;
+            if (window.createPopup) {
+                window.createPopup(coords, html, data, 'radio-popup', { className: 'cyber-popup' });
+            }
+        }
+    });
+}

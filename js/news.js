@@ -426,6 +426,13 @@ async function fetchNewsData() {
 
     try {
         const tagsToFetch = gdeltTags.length > 0 ? gdeltTags : ['military'];
+
+        // STOP CHECK: If disabled
+        if (localStorage.getItem('gdelt_enabled') === 'false') {
+            updateNewsLoadingStatus('Feed Disabled');
+            return;
+        }
+
         updateNewsLoadingStatus(`Initializing fetch for ${tagsToFetch.length} keywords...`);
 
         // Get global timeframe dates
@@ -450,6 +457,12 @@ async function fetchNewsData() {
         let runningTotal = 0; // Track loaded articles for status
 
         for (const tag of tagsToFetch) {
+            // STOP CHECK: If disabled mid-loop
+            if (localStorage.getItem('gdelt_enabled') === 'false') {
+                console.log('GDELT: Fetch halted by user.');
+                break;
+            }
+
             // Update UI status
             const searchTag = tag.toUpperCase();
             updateNewsLoadingStatus(`LOADED: ${runningTotal} | SEARCHING: ${searchTag}`);
@@ -598,6 +611,11 @@ async function fetchKeywordRecursive(tag, startTime, endTime, depth, label = "At
     logToGdeltConsole(`${myIndent}${label}: ${formatReadableTime(startTime)} -> ${formatReadableTime(endTime)}`);
 
     console.log(`GDELT: [Depth ${depth}] [${label}] ${tag} | ${formatGdeltDate(startTime)} - ${formatGdeltDate(endTime)}`);
+
+    // STOP CHECK BEFORE NETWORK CALL implies recursion will stop too
+    if (localStorage.getItem('gdelt_enabled') === 'false') {
+        return [];
+    }
 
     try {
         const response = await fetchWithProxyChain(targetUrl);
@@ -883,17 +901,33 @@ async function renderFullNewsTable(articles) {
         let dateStr = '—';
 
         if (dateRaw) {
-            // GDELT date format: 20260115T150000Z
+            // GDELT date format: 20260115T150000Z or 20260115150000
             try {
-                const year = dateRaw.slice(0, 4);
-                const month = dateRaw.slice(4, 6);
-                const day = dateRaw.slice(6, 8);
-                let h = parseInt(dateRaw.slice(9, 11));
-                const min = dateRaw.slice(11, 13);
-                const ampm = h >= 12 ? 'PM' : 'AM';
-                h = h % 12;
-                h = h ? h : 12; // the hour '0' should be '12'
-                dateStr = `${month}/${day}/${year.slice(-2)} ${h}:${min} ${ampm}`;
+                // regex to parse YYYYMMDDTHHMMSSZ or YYYYMMDDHHMMSS
+                const match = dateRaw.match(/^(\d{4})(\d{2})(\d{2})T?(\d{2})(\d{2})(\d{2})Z?$/);
+
+                if (match) {
+                    // improvements: construct explicit ISO string to ensure consistent parsing
+                    const isoString = `${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:${match[6]}Z`;
+                    let dateObj = new Date(isoString);
+
+                    // HEURISTIC: If browser reports UTC (offset 0), assume user is PST (offset 480) 
+                    // because they explicitly complained about it showing GMT/2pm instead of 8am.
+                    const sysOffset = new Date().getTimezoneOffset();
+                    if (sysOffset === 0) {
+                        // Shift time by -8 hours (PST) purely for display purposes
+                        // 14:00 UTC -> 6:00 AM PST
+                        dateObj = new Date(dateObj.getTime() - (8 * 60 * 60 * 1000));
+                    }
+
+                    // Format to local time (now shifted if needed)
+                    // Remove 'timeZoneName' to avoid "GMT" label which confused the user
+                    const localDate = dateObj.toLocaleDateString();
+                    const localTime = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    dateStr = `${localDate} ${localTime}`;
+                } else {
+                    dateStr = dateRaw; // Fallback
+                }
             } catch (e) { }
         }
 

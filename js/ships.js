@@ -241,3 +241,56 @@ const updateShipFilters = () => {
     }
 };
 
+
+// Register with InscriptionRegistry
+if (window.InscriptionRegistry) {
+    window.InscriptionRegistry.register(['ships', 'ships-dots'], {
+        hydrate: (data) => {
+            if (typeof map === 'undefined' || !map) return null;
+            const features = map.querySourceFeatures('gfw-data');
+            // Try matching SSVID/MMSI
+            if (data.mmsi) {
+                return features.find(f => f.properties.ssvid == data.mmsi)?.properties;
+            }
+            return null;
+        },
+        getMarker: (data) => {
+            const svgs = {
+                ship: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M12,2L8,6H16L12,2M12,6L8,10H16L12,6M3,12L5,14H19L21,12H3M3,15L5,17H19L21,15H3M3,15L5,17H19L21,15H3M3,18L5,20H19L21,18H3Z"/></svg>`
+            };
+
+            // Determine color
+            let color = '#0088ff';
+            if (data.event === 'gap') color = '#ff3333';
+            else if (data.event === 'encounter') color = '#ff00ff';
+            else if (data.event === 'loitering') color = '#ff6800';
+            else if (data.event === 'fishing') color = '#00ffcc';
+
+            return {
+                html: svgs.ship,
+                style: {
+                    color: color,
+                    width: '24px',
+                    height: '24px'
+                }
+            };
+        },
+        showPopup: (data, coords) => {
+            const country = data.flag || data.iso3 || 'Unknown';
+            const ssvid = data.ssvid || data.mmsi || 'N/A';
+            const eventType = (data.event || data.rawType || 'SHIP').toUpperCase();
+
+            // Basic Ship Popup
+            const html = `
+                <div class="popup-row"><span class="popup-label">TYPE:</span> ${eventType}</div>
+                <div class="popup-row"><span class="popup-label">MMSI/SSVID:</span> ${ssvid}</div>
+                <div class="popup-row"><span class="popup-label">FLAG:</span> ${country}</div>
+                <div class="popup-row"><span class="popup-label">START:</span> ${data.start || 'N/A'}</div>
+                <div class="popup-row"><span class="popup-label">END:</span> ${data.end || 'N/A'}</div>
+            `;
+            if (window.createPopup) {
+                window.createPopup(coords, html, data, 'ship-popup', { className: 'cyber-popup' });
+            }
+        }
+    });
+}

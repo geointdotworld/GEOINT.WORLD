@@ -249,3 +249,54 @@ window.earthquakeTimeframe = earthquakeTimeframe;
 window.earthquakeMinMagnitude = earthquakeMinMagnitude;
 window.showEarthquakePopup = showEarthquakePopup;
 window.earthquakeData = earthquakeData;
+
+// Register with InscriptionRegistry
+if (window.InscriptionRegistry) {
+    window.InscriptionRegistry.register('earthquake-circles', {
+        hydrate: (data) => {
+            if (typeof map === 'undefined' || !map) return null;
+            let features = (typeof window.earthquakeData !== 'undefined') ? window.earthquakeData : [];
+
+            // Fallback to map source
+            if ((!features || !features.length) && map.getSource('earthquake-data')) {
+                const source = map.getSource('earthquake-data');
+                if (source._data && source._data.features) features = source._data.features;
+            }
+            // Fallback to viewport
+            if (!features || !features.length) features = map.querySourceFeatures('earthquake-data');
+
+            return features.find(f => {
+                const p = f.properties;
+                const coords = f.geometry.coordinates;
+                const magVal = Number(data.mag);
+                const magMatch = isNaN(magVal) ? true : Math.abs(Number(p.mag) - magVal) < 0.5;
+                return magMatch &&
+                    Math.abs(coords[0] - parseFloat(data.lng)) < 0.05 &&
+                    Math.abs(coords[1] - parseFloat(data.lat)) < 0.05;
+            })?.properties;
+        },
+        getMarker: (data) => {
+            const mag = data.mag || 0;
+            let color = '#fbbf24';
+            if (mag >= 7.0) color = '#991b1b';
+            else if (mag >= 6.0) color = '#dc2626';
+            else if (mag >= 5.0) color = '#ef4444';
+            else if (mag >= 4.0) color = '#fb923c';
+
+            return {
+                html: '',
+                style: {
+                    width: '14px',
+                    height: '14px',
+                    backgroundColor: color,
+                    borderRadius: '50%',
+                    border: '2px solid white',
+                    boxShadow: '0 0 5px ' + color
+                }
+            };
+        },
+        showPopup: (data, coords) => {
+            showEarthquakePopup(data, coords);
+        }
+    });
+}

@@ -428,3 +428,57 @@ function updateFlightTrailsLayer() {
     source.setData({ type: "FeatureCollection", features: pathFeatures });
 }
 
+
+// Register with InscriptionRegistry
+if (window.InscriptionRegistry) {
+    window.InscriptionRegistry.register('flights', {
+        hydrate: (data) => {
+            if (typeof map === 'undefined' || !map) return null;
+            const features = map.querySourceFeatures('opensky-data');
+            // Try matching ICAO
+            if (data.icao) {
+                return features.find(f => f.properties.icao == data.icao)?.properties;
+            }
+            // Fallback for live feed data that might miss ICAO but has callsign?
+            if (data.callsign) {
+                return features.find(f => f.properties.callsign == data.callsign)?.properties;
+            }
+            return null;
+        },
+        getMarker: (data) => {
+            const isHelo = (data.cat === 8 || (data.callsign && (data.callsign.includes("HELO") || data.callsign.includes("POLICE"))));
+            const heading = data.heading || 0;
+
+            const svgs = {
+                plane: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="#fff" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>`,
+                helo: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="#00ccff" d="M12,2L14.5,6H18V8H14.5L14,10H17V12H14V17H10V12H7V10H10L9.5,8H6V6H9.5L12,2M12,13C13.1,13 14,13.9 14,15C14,16.1 13.1,17 12,17C10.9,17 10,16.1 10,15C10,13.9 10.9,13 12,13M2,9V11H5V9H2M19,9V11H22V9H19Z"/></svg>`
+            };
+
+            const html = isHelo ? svgs.helo : svgs.plane;
+
+            return {
+                html: html,
+                transform: `rotate(${heading}deg)`,
+                style: {
+                    width: '24px',
+                    height: '24px'
+                }
+            };
+        },
+        showPopup: (data, coords) => {
+            const html = `
+                <div class="popup-row"><span class="popup-label">CALLSIGN:</span> ${data.callsign || 'N/A'}</div>
+                <div class="popup-row"><span class="popup-label">ICAO:</span> ${data.icao || 'N/A'}</div>
+                <div class="popup-row"><span class="popup-label">ALT:</span> ${data.geo_altitude || data.baro_altitude || 'N/A'} m</div>
+                <div class="popup-row"><span class="popup-label">SPEED:</span> ${data.velocity || 'N/A'} m/s</div>
+                <div class="popup-row"><span class="popup-label">COUNTRY:</span> ${data.origin_country || 'N/A'}</div>
+                <div style="margin-top:10px; text-align:center;">
+                    <a href="https://flightaware.com/live/flight/${data.callsign}" target="_blank" class="intel-btn">[ FLIGHTAWARE ]</a>
+                </div>
+            `;
+            if (window.createPopup) {
+                window.createPopup(coords, html, data, 'flight-popup', { className: 'cyber-popup' });
+            }
+        }
+    });
+}

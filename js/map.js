@@ -71,19 +71,31 @@ const createTrackedPopup = (html, coords, layer, props, opts = {}) => {
             sendBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" /><path d="M12 12v9" /><path d="m16 16-4-4-4 4" /></svg>';
             sendBtn.onclick = async (e) => {
                 e.stopPropagation();
-                sendBtn.style.opacity = '0.5';
-                sendBtn.style.pointerEvents = 'none';
+
                 try {
-                    const { MemoSender } = await import('./livefeed.js');
-                    const result = await MemoSender?.send(props, layer, coords);
-                    setTimeout(() => {
-                        sendBtn.style.opacity = '';
-                        sendBtn.style.pointerEvents = '';
-                        if (result) {
-                            sendBtn.style.color = '#00ff00';
-                            setTimeout(() => sendBtn.style.color = '', 2000);
+                    const { MemoSender } = await import('./livefeed.js?v=120');
+                    const WalletManager = window.WalletManager;
+
+                    // Logic: If wallet is connected, show confirmation. 
+                    if (WalletManager && WalletManager.wallet && WalletManager.pubkey) {
+                        if (typeof window.showInscriptionConfirmation === 'function') {
+                            window.showInscriptionConfirmation(props, layer, coords, MemoSender);
+                        } else {
+                            await MemoSender?.send(props, layer, coords);
                         }
-                    }, 500);
+                    } else {
+                        sendBtn.style.opacity = '0.5';
+                        sendBtn.style.pointerEvents = 'none';
+                        const result = await MemoSender?.send(props, layer, coords);
+                        setTimeout(() => {
+                            sendBtn.style.opacity = '';
+                            sendBtn.style.pointerEvents = '';
+                            if (result) {
+                                sendBtn.style.color = '#00ff00';
+                                setTimeout(() => sendBtn.style.color = '', 2000);
+                            }
+                        }, 500);
+                    }
                 } catch (err) {
                     console.error("MemoSender load failed:", err);
                     sendBtn.style.opacity = '';
@@ -370,6 +382,9 @@ map.on('load', () => {
             map.on('mouseleave', layer, () => map.getCanvas().style.cursor = '');
         });
 
+        // Initialize Inscription Confirmation Modal
+        initInscriptionConfirmModal();
+
     } catch (err) {
         logSystem(`ERR: Map load failed - ${err.message}`);
         console.error(err);
@@ -387,3 +402,65 @@ function refreshCurrentPopup() {
 window.mapClickHandlers = clickHandlers;
 window.createTrackedPopup = createTrackedPopup;
 window.refreshCurrentPopup = refreshCurrentPopup;
+
+// --- Inscription Confirmation Modal Logic ---
+let pendingInscription = null;
+
+function initInscriptionConfirmModal() {
+    const modal = document.getElementById('inscription-confirm-modal');
+    const closeBtn = document.getElementById('close-inscription-confirm-btn');
+    const cancelBtn = document.getElementById('inscription-cancel-btn');
+    const uploadBtn = document.getElementById('inscription-upload-btn');
+
+    if (!modal) return;
+
+    const hide = () => {
+        modal.style.display = 'none';
+        pendingInscription = null;
+    };
+
+    closeBtn?.addEventListener('click', hide);
+    cancelBtn?.addEventListener('click', hide);
+
+    uploadBtn?.addEventListener('click', async () => {
+        if (!pendingInscription) return;
+        const { props, layer, coords, MemoSender } = pendingInscription;
+
+        // Hide modal first
+        hide();
+
+        // Trigger actual upload
+        try {
+            const result = await MemoSender?.send(props, layer, coords);
+            if (result) {
+                logSystem(`SYS: Inscription successful!`);
+            }
+        } catch (err) {
+            console.error("Inscription failed:", err);
+        }
+    });
+
+    // Close on outside click
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) hide();
+    });
+}
+
+window.showInscriptionConfirmation = function (props, layer, coords, MemoSender) {
+    const modal = document.getElementById('inscription-confirm-modal');
+    const dataEl = document.getElementById('inscription-confirm-data');
+    if (!modal || !dataEl) return;
+
+    pendingInscription = { props, layer, coords, MemoSender };
+
+    // Background optimization: Start fetching price/parameters while user views JSON
+    MemoSender?.preFetch?.();
+
+    // Format data for display (clean props for readability)
+    const displayData = { ...props };
+    delete displayData._fromLiveFeed;
+    delete displayData._forceTimeLabel;
+
+    dataEl.textContent = JSON.stringify(displayData, null, 2);
+    modal.style.display = 'block';
+}

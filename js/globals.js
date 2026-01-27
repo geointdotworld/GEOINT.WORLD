@@ -87,6 +87,7 @@ const PHP_PROXY = 'proxy.php?url=';
 // Third-party CORS proxies (fallback)
 const PROXY_SERVICES = [
     { url: 'https://api.codetabs.com/v1/proxy?quest=', name: 'codetabs' },
+    { url: 'https://api.cors.lol/?url=', name: 'corslol' },
     { url: 'https://api.allorigins.win/raw?url=', name: 'allorigins' },
     { url: 'https://corsproxy.io/?', name: 'corsproxyio' }
 ];
@@ -208,7 +209,7 @@ let isUpdatingData = false;
 
 // --- Global Data Worker Initialization (Shared) ---
 try {
-    window.dataWorker = new Worker('js/data-worker.js?v=117');
+    window.dataWorker = new Worker('js/data-worker.js?v=120');
     console.log('SYS: Global Data Worker initialized.');
 } catch (e) {
     console.error('SYS: Failed to initialize data worker:', e);

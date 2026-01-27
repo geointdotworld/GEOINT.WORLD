@@ -505,7 +505,7 @@ async function fetchBatch(offset, limit) {
 
         return results;
     } catch (e) {
-        console.error(`POLY: Batch fetch failed at offset ${offset}`, e);
+        // console.error(`POLY: Batch fetch failed at offset ${offset}`, e);
         return [];
     }
 }
@@ -544,6 +544,13 @@ async function fetchPolymarketData() {
         logSystem("POLY: Initiating deep unresolved market scan...");
         updatePolyLoadingStatus('Loading markets...');
 
+        // Check if disabled right at start
+        if (localStorage.getItem('polymarket_enabled') === 'false') {
+            logSystem("POLY: Fetch aborted (disabled).");
+            updatePolyLoadingStatus('Disabled');
+            return;
+        }
+
         // 200 limit, 45 parallel (3x faster), 600 batches (120k markets max)
         const limit = 200;
         const parallel = 45;
@@ -552,9 +559,15 @@ async function fetchPolymarketData() {
         let allMarkets = [];
 
         for (let i = 0; i < maxBatches; i += parallel) {
+            // STOP CHECK: If user toggles off mid-scan
+            if (localStorage.getItem('polymarket_enabled') === 'false') {
+                logSystem("POLY: Scan halted by user.");
+                break;
+            }
+
             const batchIndices = Array.from({ length: Math.min(parallel, maxBatches - i) }, (_, j) => i + j);
             const batchNum = Math.floor(i / parallel) + 1;
-            logSystem(`POLY: Fetching unresolved batch ${batchNum}...`);
+            // logSystem(`POLY: Fetching unresolved batch ${batchNum}...`);
 
             // Show live loading count BEFORE fetch starts
             updatePolyLoadingStatus(`Fetching batch ${batchNum}...`, allMarkets.length);
