@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEOINT.WORLD // GETTING STARTED</title>
+    <link rel="icon" type="image/png" href="../../favicon/favicon-32x32.png">
+    <meta name="theme-color" content="#ff6800">
+    <link rel="stylesheet" href="../style.css?v=114">
+</head>
+
+<body>
+    <div class="scanlines"></div>
+    <div class="grid-bg"></div>
+    <div class="app-container">
+        <header class="top-bar">
+            <div class="brand">
+                <a href="../../index.html">GEOINT.WORLD</a>
+                <span>//</span>
+                <a href="../introduction/"><span class="mobile-docs-text">DOCS</span><span
+                        class="desktop-docs-text">DOCUMENTATION</span></a>
+            </div>
+            <nav class="top-nav">
+                <a href="../../datamap.html">LAUNCH <span class="desktop-text">APP</span></a>
+                <a href="../../index.html" class="return-link">
+                    <span>
+                        << RETURN</span>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M3 9L12 2L21 9V22H3V9Z" />
+                                <path d="M9 22V12H15V22" />
+                            </svg>
+                </a>
+            </nav>
+        </header>
+
+        <div class="main-content-wrapper">
+            <aside class="sidebar">
+                <div class="nav-group">
+                    <input type="radio" name="nav-accordion" id="nav-gen" class="nav-toggle" checked>
+                    <label for="nav-gen" class="nav-header">GENERAL</label>
+                    <a href="../introduction/" class="nav-item">INTRODUCTION</a>
+                    <a href="../getting-started/" class="nav-item active">GETTING STARTED</a>
+                    <a href="../inscriptions/" class="nav-item">INSCRIPTIONS</a>
+                    <a href="../roadmap/" class="nav-item">ROADMAP</a>
+                </div>
+                <div class="nav-group">
+                    <input type="radio" name="nav-accordion" id="nav-sea" class="nav-toggle">
+                    <label for="nav-sea" class="nav-header">SEA AND SKY</label>
+                    <a href="../flight-data/" class="nav-item">FLIGHT DATA</a>
+                    <a href="../space-data/" class="nav-item">SPACE DATA</a>
+                    <a href="../maritime/" class="nav-item">SHIP DATA</a>
+                </div>
+                <div class="nav-group">
+                    <input type="radio" name="nav-accordion" id="nav-com" class="nav-toggle">
+                    <label for="nav-com" class="nav-header">COMMUNICATIONS</label>
+                    <a href="../radio-stations/" class="nav-item">RADIO STATIONS</a>
+                    <a href="../radio-repeaters/" class="nav-item">RADIO REPEATERS</a>
+                    <a href="../lora-mesh/" class="nav-item">LoRa</a>
+                    <a href="../deep-sea-cables/" class="nav-item">DEEP SEA CABLES</a>
+                </div>
+                <div class="nav-group">
+                    <input type="radio" name="nav-accordion" id="nav-news" class="nav-toggle">
+                    <label for="nav-news" class="nav-header">NEWS</label>
+                    <a href="../news/" class="nav-item">NEWS FEED</a>
+                    <a href="../prediction-markets/" class="nav-item">PREDICTION FEED</a>
+                </div>
+                <div class="nav-group">
+                    <input type="radio" name="nav-accordion" id="nav-nat" class="nav-toggle">
+                    <label for="nav-nat" class="nav-header">NATURAL</label>
+                    <a href="../earthquakes/" class="nav-item">EARTHQUAKES</a>
+                </div>
+            </aside>
+            <main class="content">
+                <section class="doc-section">
+                    <h1>GETTING STARTED</h1>
+                    <p>GEOINT.WORLD operates as a unified 3D geospatial intelligence terminal. This guide outlines
+                        standard viewport controls and data layer management protocols.</p>
+
+                    <h2>// CONTROL INTERFACE</h2>
+
+                    <!-- Desktop Controls -->
+                    <ul style="list-style-type: none; padding-left: 0;" class="desktop-controls">
+                        <li style="margin-bottom: 15px;">
+                            <strong style="color:var(--primary); font-family:'Courier New';">[ L-CLICK + DRAG
+                                ]</strong><br>
+                            <span style="color:#aaa;">Rotate the globe view.</span>
+                        </li>
+                        <li style="margin-bottom: 15px;">
+                            <strong style="color:var(--primary); font-family:'Courier New';">[ R-CLICK + DRAG
+                                ]</strong><br>
+                            <span style="color:#aaa;">Adjust camera pitch (tilt) and bearing. Essential for 3D
+                                visualizations of satellite orbits.</span>
+                        </li>
+                        <li style="margin-bottom: 15px;">
+                            <strong style="color:var(--primary); font-family:'Courier New';">[ SCROLL ]</strong><br>
+                            <span style="color:#aaa;">Dynamic zoom level. Transitions seamlessly from orbital view down
+                                to street-level mapping.</span>
+                        </li>
+                        <li style="margin-bottom: 15px;">
+                            <strong style="color:var(--primary); font-family:'Courier New';">[ L-CLICK (TARGET)
+                                ]</strong><br>
+                            <span style="color:#aaa;">Select any asset (plane, ship, satellite) to open its telemetry
+                                card. Displays velocity, altitude, origin, and identification data.</span>
+                        </li>
+                    </ul>
+
+                    <!-- Mobile Controls -->
+                    <ul style="list-style-type: none; padding-left: 0;" class="mobile-controls">
+                        <li style="margin-bottom: 15px;">
+                            <strong style="color:var(--primary); font-family:'Courier New';">[ ONE FINGER DRAG
+                                ]</strong><br>
+                            <span style="color:#aaa;">Rotate the globe view.</span>
+                        </li>
+                        <li style="margin-bottom: 15px;">
+                            <strong style="color:var(--primary); font-family:'Courier New';">[ TWO FINGER DRAG
+                                ]</strong><br>
+                            <span style="color:#aaa;">Adjust camera pitch (tilt) and bearing. Essential for 3D
+                                visualizations of satellite orbits.</span>
+                        </li>
+                        <li style="margin-bottom: 15px;">
+                            <strong style="color:var(--primary); font-family:'Courier New';">[ PINCH TO ZOOM
+                                ]</strong><br>
+                            <span style="color:#aaa;">Dynamic zoom level. Transitions seamlessly from orbital view down
+                                to street-level mapping.</span>
+                        </li>
+                        <li style="margin-bottom: 15px;">
+                            <strong style="color:var(--primary); font-family:'Courier New';">[ TAP (TARGET)
+                                ]</strong><br>
+                            <span style="color:#aaa;">Select any asset (plane, ship, satellite) to open its telemetry
+                                card. Displays velocity, altitude, origin, and identification data.</span>
+                        </li>
+                    </ul>
+
+                    <style>
+                        /* Show desktop controls by default, hide mobile */
+                        .desktop-controls {
+                            display: block;
+                        }
+
+                        .mobile-controls {
+                            display: none;
+                        }
+
+                        /* On mobile devices, hide desktop and show mobile controls */
+                        @media (max-width: 768px) {
+                            .desktop-controls {
+                                display: none;
+                            }
+
+                            .mobile-controls {
+                                display: block;
+                            }
+                        }
+                    </style>
+
+                    <h2>// SEARCH SYSTEM</h2>
+                    <p>The platform features a global, high-performance search engine capable of indexing live telemetry
+                        and static infrastructure simultaneously.</p>
+
+                    <ul style="list-style-type: none; padding-left: 0;">
+                        <li style="margin-bottom: 15px;">
+                            <strong style="color:var(--primary); font-family:'Courier New';">AUTOCOMPLETE
+                                PROTOCOL</strong><br>
+                            <span style="color:#aaa;">Search results refresh dynamically after entering at least 2
+                                characters. The dropdown categorizes hits by type (e.g., SKY, SEA, SPACE, CABLE).</span>
+                        </li>
+                        <li style="margin-bottom: 15px;">
+                            <strong style="color:var(--primary); font-family:'Courier New';">SEARCHABLE
+                                PARAMETERS</strong><br>
+                            <span style="color:#aaa;">You can search by ICAO/Callsign (Flights), SSVID/IMO (Ships), Node
+                                Names/IDs (LoRa), or simply enter a City or Country to geocode and fly to any
+                                location.</span>
+                        </li>
+                        <li style="margin-bottom: 15px;">
+                            <strong style="color:var(--primary); font-family:'Courier New';">PRECISION
+                                NAVIGATION</strong><br>
+                            <span style="color:#aaa;">Selecting a search result will automatically fly the camera to the
+                                target coordinates and trigger its detailed telemetry popup.</span>
+                        </li>
+                    </ul>
+
+                    <blockquote>
+                        If a red location pin remains after searching, simply click the "✕" in the search bar to
+                        clear the target marker.
+                    </blockquote>
+
+                    <h2>// DATA LAYERS</h2>
+                    <p>The sidebar on the left controls the visibility of all intelligence layers. Data is grouped by
+                        domain:</p>
+
+                    <h3>HIERARCHY</h3>
+                    <ul style="color:#ccc; line-height: 1.8;">
+                        <li><strong>SEA AND SKY</strong>: Moving assets (Aircraft, Vessels, Satellites).</li>
+                        <li><strong>COMMUNICATIONS</strong>: Static infrastructure (Radio towers, Cables) and dynamic
+                            signals (LoRa).</li>
+                        <li><strong>NEWS</strong>: Geopolitics and event monitoring.</li>
+                        <li><strong>NATURAL</strong>: Environmental hazards.</li>
+                    </ul>
+
+                    <blockquote>
+                        Use the <span style="color:var(--primary)">⚙</span> icon next to layers to access
+                        advanced filters (e.g., filtering flights by altitude or satellites by country of origin).
+                    </blockquote>
+
+                    <h2>// LIVE FEED</h2>
+                    <p>The red live feed button below the toggle box shows inscriptions made from users, stored on the
+                        solana blockchain.</p>
+
+                    <h3>MECHANICS</h3>
+                    <p>The inscriptions seen on the live feed data are not stored on any one server. Instead, they are
+                        fetched directly from the Solana blockchain.</p>
+                    <ul style="color:#ccc; line-height: 1.8;">
+                        <li><strong>LISTENING:</strong> The client constantly scans the blockchain for inscriptions
+                            interacting with the GEOINT Memo Program.</li>
+                        <li><strong>DECODING:</strong> When a transaction is found, the client decodes the hex-encoded
+                            string in the SPL Memo instruction.</li>
+                        <li><strong>VERIFICATION:</strong> The signature is validated against the chain state to ensure
+                            the data is immutable and has been properly burned for.</li>
+                        <li><strong>VISUALIZATION:</strong> Validated messages appear in the feed. Clicking a feed item
+                            parses the coordinates and immediately moves the camera to the event location.</li>
+                    </ul>
+
+                    <h2>// INSCRIPTIONS</h2>
+                    <p>Users can permanently archive any visible telemetry data by burning $3 USD worth of $GEOINT
+                        tokens to the blockchain.</p>
+
+                    <h3>PROCESS</h3>
+                    <p>When you click the "Send to Blockchain" button on any asset popup, the following occurs:</p>
+                    <ul style="color:#ccc; line-height: 1.8;">
+                        <li><strong>INITIATION:</strong> A transaction is created that swaps $3 USD of SOL to $GEOINT.
+                        </li>
+                        <li><strong>BURN:</strong> The $GEOINT tokens are immediately sent to a burn address, reducing
+                            total supply.</li>
+                        <li><strong>ENCODING:</strong> The asset's telemetry (coordinates, timestamp, callsign,
+                            velocity) is encoded into the transaction memo.</li>
+                        <li><strong>PERMANENCE:</strong> The inscription is now immutable and permanently retrievable
+                            from any Solana node.</li>
+                    </ul>
+
+                </section>
+                <div class="legal-footer">
+                    <a href="../../legal.html?from=docs">LEGAL</a> | <a
+                        href="mailto:CONTACT@GEOINT.WORLD">CONTACT@GEOINT.WORLD</a>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script>
+        // Allow radio buttons to be unchecked (close accordion)
+        document.querySelectorAll('.nav-toggle').forEach(radio => {
+            radio.addEventListener('click', function (e) {
+                if (this.dataset.checked === 'true') {
+                    this.checked = false;
+                    this.dataset.checked = 'false';
+                } else {
+                    document.querySelectorAll('.nav-toggle').forEach(r => r.dataset.checked = 'false');
+                    this.dataset.checked = 'true';
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

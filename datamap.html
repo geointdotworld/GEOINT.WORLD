@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>GEOINT.WORLD</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="apple-touch-icon" sizes="57x57" href="favicon/apple-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="favicon/apple-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="favicon/apple-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="favicon/apple-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="favicon/apple-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="favicon/apple-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="favicon/apple-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="favicon/apple-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-icon-180x180.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="favicon/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="favicon/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
+    <link rel="manifest" href="favicon/manifest.json">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" content="favicon/ms-icon-144x144.png">
+    <meta name="theme-color" content="#ff6800">
+    <script src="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/satellite.js/5.0.0/satellite.min.js" defer></script>
+    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js" defer></script>
+    <link href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css" rel="stylesheet" />
+    <link rel="stylesheet" href="css/style.css?v=114">
+    <script>
+        window.onerror = function (msg, url, lineNo, columnNo, error) {
+            const message = `[GLOBAL ERROR] ${msg} at ${url}:${lineNo}:${columnNo}`;
+            console.error(message, error);
+            if (typeof logSystem === 'function') {
+                logSystem(`ERR: JS Crash - ${msg}`);
+            }
+            return false;
+        };
+    </script>
+</head>
+<style>
+    @media (max-width: 900px) {
+
+        /* DIRECT INJECTION TO FIX CACHING ISSUES */
+        #ui-left-container {
+            pointer-events: none;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: auto !important;
+            width: calc(100vw - 90px) !important;
+            /* 20px left + 70px right buffer = ~15px visual gap */
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 15px !important;
+            z-index: 20;
+            height: auto !important;
+        }
+
+        #search-bar {
+            display: flex !important;
+            position: relative !important;
+            left: 0 !important;
+            top: auto !important;
+            width: 100% !important;
+            max-width: none !important;
+            transform: none !important;
+            flex-direction: column !important;
+            align-items: stretch !important;
+            padding: 0 !important;
+            pointer-events: auto;
+            height: auto !important;
+            min-height: 35px;
+            margin: 0 !important;
+        }
+
+
+        #search-dropdown {
+            position: relative !important;
+            top: auto !important;
+            left: auto !important;
+            right: auto !important;
+            width: 100% !important;
+            border: none !important;
+            border-top: 1px solid #ff6800 !important;
+            max-height: 40vh !important;
+            z-index: 100 !important;
+            pointer-events: auto !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            background: rgba(0, 0, 0, 0.95) !important;
+            -webkit-overflow-scrolling: touch !important;
+        }
+
+        #left-panel-wrapper {
+            position: relative !important;
+            top: auto !important;
+            left: auto !important;
+            width: 100% !important;
+            transform: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            gap: 15px !important;
+            display: flex !important;
+            flex-direction: column !important;
+        }
+
+        #controls {
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+        }
+
+        /* Touch-friendly search items */
+        .search-item {
+            padding: 12px 10px !important;
+            min-height: 44px !important;
+            /* Apple's recommended touch target */
+            pointer-events: auto !important;
+            touch-action: manipulation !important;
+        }
+    }
+</style>
+
+<body>
+
+    <div id="overlay">
+        <h1><a href="index.html" class="overlay-link">GEOINT.WORLD</a><span class="blink live-dot">●</span></h1>
+    </div>
+
+    <div id="ui-left-container">
+        <div id="search-bar">
+            <div class="search-input-wrapper">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff6800" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round" class="search-icon-svg">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="search-input" placeholder="SEARCH..." autocomplete="off">
+                <span id="search-clear" onclick="clearSearch()">✕</span>
+            </div>
+            <div id="search-dropdown"></div>
+        </div>
+
+        <div id="left-panel-wrapper">
+            <div id="controls">
+                <div>
+                    <div class="control-row" id="trackable-header">
+                        <label class="toggle-container folder-label-container">
+                            <span class="toggle-label folder-label-text"><span class="folder-arrow">>></span> SEA AND
+                                SKY</span>
+                        </label>
+                    </div>
+                    <div id="trackable-content" class="trackable-folder-content">
+                        <div class="control-section">
+                            <div class="control-row">
+                                <label class="toggle-container">
+                                    <input type="checkbox" id="flight-toggle">
+                                    <span class="checkmark"></span>
+                                    <span class="toggle-label">FLIGHT DATA</span>
+                                </label>
+                                <div class="row-icons">
+                                    <span id="flight-legend-info-btn" class="info-icon" title="FLIGHT LEGEND">i</span>
+                                    <span id="flight-settings-btn" class="settings-icon">⚙</span>
+                                </div>
+                            </div>
+                            <div id="flight-sub-options" class="sub-options">
+                            </div>
+                        </div>
+
+                        <div class="control-section">
+                            <div class="control-row">
+                                <label class="toggle-container">
+                                    <input type="checkbox" id="space-toggle">
+                                    <span class="checkmark"></span>
+                                    <span class="toggle-label">SPACE DATA</span>
+                                </label>
+                                <div class="row-icons">
+                                    <span id="space-settings-btn" class="settings-icon">⚙</span>
+                                </div>
+                            </div>
+                            <div id="space-sub-options" class="sub-options">
+                                <div class="control-row">
+                                    <label class="toggle-container">
+                                        <input type="checkbox" id="satellites-toggle" checked>
+                                        <span class="checkmark checkmark-small"></span>
+                                        <span class="toggle-label label-small">SATELLITES</span>
+                                    </label>
+                                    <div class="row-icons">
+                                        <span id="satellite-filter-btn" class="settings-icon" title="FILTER SATELLITES">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                style="vertical-align: middle; display: inline-block;">
+                                                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                                            </svg>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <label class="toggle-container">
+                                    <input type="checkbox" id="stations-toggle" checked>
+                                    <span class="checkmark checkmark-small"></span>
+                                    <span class="toggle-label label-small">SPACE STATIONS</span>
+                                </label>
+
+                                <label class="toggle-container">
+                                    <input type="checkbox" id="debris-toggle" checked>
+                                    <span class="checkmark checkmark-small"></span>
+                                    <span class="toggle-label label-small">OTHER</span>
+                                </label>
+
+                                <div class="poll-controls">
+                                    <span id="space-poll-value" class="poll-val-spacing">30s</span>
+                                    <button id="space-poll-down" class="poll-btn">▼</button>
+                                    <button id="space-poll-up" class="poll-btn">▲</button>
+                                    <button id="space-step-btn" class="step-btn">±10s</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="ship-container" class="control-section">
+                            <div class="control-row">
+                                <label class="toggle-container">
+                                    <input type="checkbox" id="ship-toggle">
+                                    <span class="checkmark"></span>
+                                    <span class="toggle-label">SHIP DATA</span>
+                                </label>
+                                <div class="row-icons">
+                                    <span id="legend-info-btn" class="info-icon" title="SIGNAL LEGEND">i</span>
+                                    <span id="ship-settings-btn" class="settings-icon">⚙</span>
+                                </div>
+                            </div>
+                            <div id="ship-sub-options" class="sub-options">
+                                <label class="toggle-container">
+                                    <input type="checkbox" id="ship-gap-toggle" checked>
+                                    <span class="checkmark checkmark-small custom-check-gap"></span>
+                                    <span class="toggle-label label-small text-red">DARK / GAPS</span>
+                                </label>
+                                <label class="toggle-container">
+                                    <input type="checkbox" id="ship-encounter-toggle">
+                                    <span class="checkmark checkmark-small custom-check-enc"></span>
+                                    <span class="toggle-label label-small text-magenta">ENCOUNTERS</span>
+                                </label>
+                                <label class="toggle-container">
+                                    <input type="checkbox" id="ship-loitering-toggle">
+                                    <span class="checkmark checkmark-small custom-check-loit"></span>
+                                    <span class="toggle-label label-small text-orange">LOITERING</span>
+                                </label>
+                                <label class="toggle-container">
+                                    <input type="checkbox" id="ship-fishing-toggle" checked>
+                                    <span class="checkmark checkmark-small custom-check-fish"></span>
+                                    <span class="toggle-label label-small text-teal">FISHING</span>
+                                </label>
+                                <label class="toggle-container">
+                                    <input type="checkbox" id="ship-port-toggle">
+                                    <span class="checkmark checkmark-small custom-check-port"></span>
+                                    <span class="toggle-label label-small text-blue">PORT VISITS</span>
+                                </label>
+                                <div class="poll-controls">
+                                    <span id="ship-poll-value" class="poll-val-spacing">5m</span>
+                                    <button id="ship-poll-down" class="poll-btn">▼</button>
+                                    <button id="ship-poll-up" class="poll-btn">▲</button>
+                                    <button id="ship-step-btn" class="step-btn">±1m</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="control-row" id="communications-header">
+                        <label class="toggle-container folder-label-container">
+                            <span class="toggle-label folder-label-text"><span class="folder-arrow">>></span>
+                                COMMUNICATIONS</span>
+                        </label>
+                    </div>
+                    <div id="communications-content" class="trackable-folder-content">
+                        <!-- Radio Stations Section -->
+                        <div id="radio-container" class="control-section">
+                            <div class="control-row">
+                                <label class="toggle-container">
+                                    <input type="checkbox" id="radio-toggle">
+                                    <span class="checkmark"></span>
+                                    <span class="toggle-label">RADIO STATIONS</span>
+                                </label>
+                            </div>
+                            <div id="radio-sub-options" class="sub-options">
+                                <div id="radio-player-controls" class="radio-player-controls">
+                                    <div id="radio-now-playing" class="radio-now-playing">--</div>
+                                    <button id="radio-stop-btn" class="radio-stop-btn">STOP</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Radio Repeaters Section (Disabled) -->
+                        <div id="repeaters-container" class="control-section"
+                            style="opacity: 0.4; pointer-events: none;">
+                            <div class="control-row">
+                                <label class="toggle-container">
+                                    <input type="checkbox" id="repeaters-toggle" disabled>
+                                    <span class="checkmark"></span>
+                                    <span class="toggle-label">RADIO REPEATERS</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="control-section">
+                            <div class="control-row">
+                                <label class="toggle-container">
+                                    <input type="checkbox" id="mesh-toggle">
+                                    <span class="checkmark"></span>
+                                    <span class="toggle-label no-transform">LoRa</span>
+                                </label>
+                                <div class="row-icons">
+                                    <span id="mesh-legend-info-btn" class="info-icon"
+                                        title="MESH NETWORK LEGEND">i</span>
+                                    <span id="mesh-settings-btn" class="settings-icon">⚙</span>
+                                </div>
+                            </div>
+                            <div id="mesh-sub-options" class="sub-options">
+                                <div class="control-row">
+                                    <label class="toggle-container">
+                                        <input type="checkbox" id="meshtastic-toggle" checked>
+                                        <span class="checkmark checkmark-small"></span>
+                                        <span class="toggle-label label-small">MESHTASTIC</span>
+                                    </label>
+                                    <div class="row-icons">
+                                        <span id="meshtastic-filter-btn" class="settings-icon" title="FILTER BY ROLE">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                style="vertical-align: middle; display: inline-block;">
+                                                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                                            </svg>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="control-row">
+                                    <label class="toggle-container">
+                                        <input type="checkbox" id="meshcore-toggle" checked>
+                                        <span class="checkmark checkmark-small"></span>
+                                        <span class="toggle-label label-small">MESHCORE</span>
+                                    </label>
+                                    <div class="row-icons">
+                                        <span id="meshcore-filter-btn" class="settings-icon" title="FILTER BY TYPE">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                style="vertical-align: middle; display: inline-block;">
+                                                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                                            </svg>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="control-section">
+                            <div class="control-row">
+                                <label class="toggle-container">
+                                    <input type="checkbox" id="cables-toggle">
+                                    <span class="checkmark"></span>
+                                    <span class="toggle-label">DEEP SEA CABLES</span>
+                                </label>
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+
+                <div>
+                    <div class="control-row" id="news-feed-header">
+                        <label class="toggle-container folder-label-container">
+                            <span class="toggle-label folder-label-text"><span class="folder-arrow">>></span>
+                                NEWS</span>
+                        </label>
+                    </div>
+                    <div id="news-feed-content" class="trackable-folder-content">
+                        <div class="control-section">
+                            <div class="control-row">
+                                <label class="toggle-container">
+                                    <input type="checkbox" id="gdelt-toggle" checked>
+                                    <span class="checkmark"></span>
+                                    <span class="toggle-label">NEWS FEED</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="control-section">
+                            <div class="control-row">
+                                <label class="toggle-container">
+                                    <input type="checkbox" id="polymarket-toggle" checked>
+                                    <span class="checkmark"></span>
+                                    <span class="toggle-label">PREDICTION FEED</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="control-row" id="natural-header">
+                        <label class="toggle-container folder-label-container">
+                            <span class="toggle-label folder-label-text"><span class="folder-arrow">>></span>
+                                NATURAL</span>
+                        </label>
+                    </div>
+                    <div id="natural-content" class="trackable-folder-content">
+                        <div class="control-section">
+                            <div class="control-row">
+                                <label class="toggle-container">
+                                    <input type="checkbox" id="earthquake-toggle" checked>
+                                    <span class="checkmark"></span>
+                                    <span class="toggle-label">EARTHQUAKES</span>
+                                </label>
+                                <div class="row-icons">
+                                    <span id="earthquake-settings-btn" class="settings-icon">⚙</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="live-feed-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                LIVE FEED
+            </div>
+        </div>
+    </div>
+
+
+    <div id="repeater-select-prompt"
+        style="display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.95); border: 2px solid #ff6800; padding: 12px 24px; z-index: 1000; color: #ff6800; font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; box-shadow: 0 0 15px rgba(255, 104, 0, 0.8); pointer-events: none; text-align: center; line-height: 1.6;">
+        <div id="repeater-select-main-text">SELECT UP TO 3 REGIONS: CLICK ON THE MAP</div>
+        <div id="repeater-select-sub-text" style="margin-top: 8px; font-size: 11px; opacity: 0.9;">REPEATER DATA MUST BE
+            LOADED BY AREA</div>
+    </div>
+
+    <!-- Repeater Selection Mode Back Button -->
+    <div id="repeater-back-btn"
+        style="display: none; position: fixed; top: 20px; left: 20px; z-index: 1001; color: #ff6800; text-decoration: none; border: 1px solid #ff6800; padding: 8px 15px; font-weight: bold; text-transform: uppercase; background: rgba(0,0,0,0.8); transition: all 0.3s; cursor: pointer; font-family: 'Courier New', Courier, monospace; font-size: 0.9rem; box-shadow: 0 0 15px rgba(255, 104, 0, 0.8);">
+        &lt;&lt; RETURN
+    </div>
+
+    <!-- Repeater Selected Areas List -->
+    <div id="repeater-selected-areas"
+        style="display: none; position: fixed; bottom: 145px; left: 50%; transform: translateX(-50%); z-index: 1000; max-width: calc(100vw - 40px); min-width: 200px; box-sizing: border-box;">
+        <div id="repeater-selected-list"
+            style="display: flex; flex-direction: column; gap: 4px; align-items: stretch; width: 100%;">
+            <!-- Selected areas will be inserted here -->
+        </div>
+    </div>
+
+    <!-- Repeater Selection Mode Load Button -->
+    <div id="repeater-load-btn"
+        style="display: none; position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%); z-index: 1000; background: rgba(0, 0, 0, 0.95); border: 3px solid #00ff00; color: #00ff00; padding: 18px 30px; cursor: pointer; font-size: 18px; font-weight: bold; text-transform: uppercase; letter-spacing: 3px; box-shadow: 0 0 30px rgba(0, 255, 0, 0.6); transition: all 0.3s; white-space: nowrap; max-width: calc(100vw - 40px); min-width: 200px; text-align: center; box-sizing: border-box;">
+        LOAD (<span id="repeater-selected-count">0</span>/3)
+    </div>
+
+    <!-- Repeater Selection Mode Skip Button -->
+    <div id="repeater-skip-btn"
+        style="display: none; position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); z-index: 1000; background: rgba(0, 0, 0, 0.95); border: 2px solid #aaaaaa; color: #aaaaaa; padding: 10px 20px; cursor: pointer; text-align: center; box-shadow: 0 0 20px rgba(170, 170, 170, 0.4); transition: all 0.3s; max-height: 55px; overflow: hidden; box-sizing: border-box; max-width: calc(100vw - 40px); min-width: 200px;">
+        <div
+            style="font-size: 16px; font-weight: bold; letter-spacing: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            SKIP >></div>
+        <div
+            style="font-size: 10px; margin-top: 3px; opacity: 0.8; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            LOADED: <span id="repeater-cached-list">NONE</span></div>
+    </div>
+
+    <div id="mobile-search-toggle">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    </div>
+
+    <div id="top-settings-btn" title="SETTINGS">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+            </path>
+        </svg>
+    </div>
+
+    <div id="globe-toggle-btn" title="TOGGLE GLOBE VIEW">
+        <!-- 3D text (shown when in flat map mode) -->
+        <span id="globe-icon" class="view-toggle-text">3D</span>
+        <!-- 2D text (shown when in globe mode) -->
+        <span id="flat-icon" class="view-toggle-text flat-icon-hidden">2D</span>
+    </div>
+
+    <div id="wallet-btn" title="CONNECT WALLET">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path>
+            <path d="M4 6v12c0 1.1.9 2 2 2h14v-4"></path>
+            <path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z"></path>
+        </svg>
+    </div>
+
+    <div id="bug-report-btn" title="REPORT ISSUE">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect width="8" height="14" x="8" y="6" rx="4" />
+            <path d="m19 7-3 3" />
+            <path d="m5 7 3 3" />
+            <path d="m19 19-3-3" />
+            <path d="m5 19 3-3" />
+            <path d="M20 13h-4" />
+            <path d="M4 13h4" />
+            <path d="m10 4 1 2" />
+            <path d="m14 4-1 2" />
+        </svg>
+    </div>
+
+    <div id="info-btn" title="INFORMATION">
+        <span class="info-btn-text">i</span>
+    </div>
+
+    <div id="exit-btn" title="EXIT TO LANDING">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5V5h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+        </svg>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <div class="panel-header">
+                <span>SETTINGS</span>
+                <span id="close-settings-btn">[X]</span>
+            </div>
+            <div class="panel-content">
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>MAX ENTITIES</span>
+                        <span id="limit-value">300000</span>
+                    </div>
+                    <input type="range" id="entity-limit-slider" min="100" max="500000" step="100" value="300000"
+                        title="Entity Limit Slider">
+                </div>
+
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>UNITS</span>
+                        <span id="unit-label" class="unit-label-text">METRIC</span>
+                    </div>
+
+                    <div class="unit-toggle-wrapper">
+                        <div id="unit-btn-imp" class="unit-option">IMP</div>
+                        <div id="unit-btn-met" class="unit-option active">METRIC</div>
+                    </div>
+                </div>
+
+                <div class="slider-container">
+                    <label class="toggle-container" style="justify-content: space-between; width: 100%;">
+                        <span class="toggle-label">CONSOLE LOG</span>
+                        <input type="checkbox" id="console-toggle">
+                        <span class="checkmark" style="margin-right: 0;"></span>
+                    </label>
+                </div>
+
+
+
+
+                <button id="clear-cache-btn" class="intel-btn"
+                    style="background: rgba(51, 0, 0, 0.8); border-color: #ff3333; color: #ff3333; margin-top: 15px;">CLEAR
+                    BROWSER CACHE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONFIRM CLEAR CACHE MODAL -->
+    <div id="confirm-clear-modal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="panel-header">
+                <span>CONFIRM ACTION</span>
+                <span id="close-confirm-clear-btn" class="cursor-pointer">[X]</span>
+            </div>
+            <div class="panel-content" style="text-align: center; padding: 25px;">
+                <p style="color: #ff6800; font-size: 14px; margin-bottom: 20px;">
+                    Clear all cached data and reload the page?
+                </p>
+                <p style="color: #888; font-size: 11px; margin-bottom: 25px;">
+                    This will remove all locally stored data including settings, cached API responses, and session data.
+                </p>
+                <div style="display: flex; gap: 15px; justify-content: center;">
+                    <button id="confirm-clear-yes-btn" class="intel-btn"
+                        style="background: rgba(51, 0, 0, 0.8); border-color: #ff3333; color: #ff3333; min-width: 100px;">YES,
+                        CLEAR</button>
+                    <button id="confirm-clear-no-btn" class="intel-btn" style="min-width: 100px;">CANCEL</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ISSUE REPORT MODAL -->
+    <div id="issue-modal" class="modal">
+        <div class="modal-content">
+            <div class="panel-header">
+                <span>REPORT ISSUE</span>
+                <span id="close-issue-btn" class="cursor-pointer">[X]</span>
+            </div>
+            <div class="modal-section-margin">
+                <p class="modal-desc-text">DESCRIPTION</p>
+                <textarea id="issue-text"
+                    placeholder="Report an issue, suggest a change, or request a feature to be added..."></textarea>
+                <div id="issue-status-message"></div>
+            </div>
+            <button id="submit-issue-btn" class="intel-btn">SUBMIT ISSUE</button>
+        </div>
+    </div>
+
+    <!-- INFO MODAL -->
+    <div id="info-modal" class="modal">
+        <div class="modal-content">
+            <div class="panel-header">
+                <span>INFORMATION</span>
+                <span id="close-info-btn" class="cursor-pointer">[X]</span>
+            </div>
+            <div class="info-content">
+                <p><strong>GEOINT.WORLD</strong> is a real-time geospatial intelligence (GEOINT) and OSINT visualization
+                    platform for tracking aircraft, maritime vessels, satellites, mesh networks, and global
+                    communications infrastructure.</p>
+                <br>
+                <p>Use the controls on the left to toggle layers. Click on any target for detailed intelligence.</p>
+                <br>
+                <p><strong>SEARCHING DATA:</strong></p>
+                <p>To search through data (e.g., ship data, flight data), you must first toggle the corresponding layer
+                    ON to load the data. The search function only searches through data that has been loaded into
+                    memory. For example, to search for ships, enable "SHIP DATA" first, then use the search bar.</p>
+                <br>
+                <p><strong>DATA SOURCES:</strong></p>
+                <ul class="info-list">
+                    <li>ADS-B Exchange / adsb.lol / OpenSky (Aircraft)</li>
+                    <li>Global Fishing Watch (Maritime)</li>
+                    <li>CelesTrak (Satellites)</li>
+                    <li>TeleGeography / Submarine Cable Map (Deep Sea Cables)</li>
+                    <li>Radio Browser API (Radio Stations)</li>
+                    <li>RepeaterBook (Radio Repeaters)</li>
+                    <li>MeshMap.net (Meshtastic Mesh Networks)</li>
+                    <li>MeshCore.dev (MeshCore Network Nodes)</li>
+                    <li>The GDELT Project (Global News Events)</li>
+                    <li>Polymarket (Prediction Markets & Future Analytics)</li>
+                    <li>USGS (Earthquakes)</li>
+                    <li>OpenFreeMap (Base Map)</li>
+                </ul>
+                <br>
+                <p><a href="legal.html?from=datamap" class="legal-link">[ LEGAL / PRIVACY POLICY ]</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEWS/GDELT COMPOSITE MODAL -->
+    <div id="news-modal" class="modal">
+        <div class="news-composite-content">
+            <!-- GDELT ANALYTICS SIDE -->
+            <div id="gdelt-analytics-modal" class="poly-modal-side">
+                <div class="panel-header">
+                    <span>GDELT NEWS FILTER <span id="gdelt-header-count"
+                            style="color: #ffcc00; margin-left: 5px;"></span></span>
+                    <span id="close-news-btn" class="cursor-pointer mobile-only">[X]</span>
+                </div>
+                <div class="panel-content">
+                    <p style="font-size: 11px; color: #888; margin-bottom: 15px;">
+                        This feed monitors real-time news events worldwide. Use the settings tab to enable/disable the
+                        stream.
+                    </p>
+
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>KEYWORD FILTER</span>
+                        </div>
+                        <div id="gdelt-tag-container" class="poly-tag-container">
+                            <div id="gdelt-tag-list" class="poly-tag-list" style="text-transform: uppercase;"></div>
+                            <input type="text" id="gdelt-tag-input" placeholder="Type keyword + space/comma..."
+                                class="poly-tag-input" style="text-transform: uppercase;">
+                        </div>
+                    </div>
+
+
+                    <div class="slider-container" style="margin-top: 20px;">
+                        <div class="slider-label">
+                            <span>NEGATIVE KEYWORDS (EXCLUDE)</span>
+                        </div>
+                        <div id="gdelt-neg-tag-container" class="poly-tag-container">
+                            <div id="gdelt-neg-tag-list" class="poly-tag-list" style="text-transform: uppercase;"></div>
+                            <input type="text" id="gdelt-neg-tag-input" placeholder="Type keyword + space/comma..."
+                                class="poly-tag-input" style="text-transform: uppercase;">
+                        </div>
+                    </div>
+
+                    <div class="slider-container" style="margin-top: 20px;">
+                        <div class="slider-label">
+                            <span>TIMEFRAME</span>
+                        </div>
+                        <div class="unit-toggle-wrapper"
+                            style="margin-top: 8px; border: none; background: none; gap: 5px;">
+                            <div class="unit-option gdelt-time-btn active" data-time="1h"
+                                style="border: 1px solid #ff6800;">1H</div>
+                            <div class="unit-option gdelt-time-btn" data-time="6h" style="border: 1px solid #ff6800;">6H
+                            </div>
+                            <div class="unit-option gdelt-time-btn" data-time="12h" style="border: 1px solid #ff6800;">
+                                12H</div>
+                            <div class="unit-option gdelt-time-btn" data-time="24h" style="border: 1px solid #ff6800;">
+                                24H</div>
+                        </div>
+                    </div>
+
+
+                    <button id="gdelt-fetch-btn" class="intel-btn" style="margin-top: 5px;">FETCH LATEST DATA</button>
+
+                    <button id="gdelt-show-all-btn" class="cursor-pointer mobile-only"
+                        style="display: none !important; width: 100%; height: 45px; margin-top: 5px; margin-bottom: 5px; background: #1a0d00; border: 1px solid #ff6800; color: #ff6800; font-family: 'Courier New', monospace; font-weight: bold; padding: 12px 0; text-transform: uppercase;">SEE
+                        NEWS IN TABLE VIEW</button>
+
+                    <!-- GDELT ASCII TREE CONSOLE -->
+                    <div id="gdelt-console-isolation-frame"
+                        style="display: block; width: 100%; height: auto; margin: 0; padding: 0;">
+                        <div id="gdelt-console-wrapper"
+                            style="margin-top: 25px; margin-bottom: 0; padding: 5px 5px 0 0; font-family: 'Courier New', monospace; font-size: 11px; color: #ff6800; white-space: pre-wrap; word-wrap: break-word; line-height: 1.3; width: 100%; box-sizing: border-box; overflow-y: auto; -webkit-overflow-scrolling: touch;">
+                            <div id="gdelt-console-output"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GDELT FULL LIST SIDE -->
+            <div id="gdelt-full-list-modal" class="poly-modal-side poly-table-side">
+                <div class="panel-header">
+                    <span>TABLE VIEW</span>
+                    <span id="close-news-composite-btn" class="cursor-pointer desktop-only">[X]</span>
+                    <span id="close-news-full-list-btn" class="cursor-pointer mobile-only">[X]</span>
+                </div>
+                <div class="panel-content"
+                    style="overflow: hidden; display: flex; flex-direction: column; flex-grow: 1; min-height: 0;">
+                    <div class="poly-table-search-wrapper">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff6800" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" class="poly-table-search-icon">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" id="gdelt-table-search" placeholder="SEARCH NEWS..."
+                            style="width: 100%; box-sizing: border-box; background: transparent; border: none; color: #ff6800; font-family: 'Courier New', monospace; font-size: 12px; padding: 10px 4px; outline: none; text-transform: uppercase;">
+                    </div>
+                    <div id="gdelt-table-container"
+                        style="overflow-y: auto; flex-grow: 1; margin-top: 10px; min-height: 0;">
+                        <div class="poly-loader-container">
+                            <div class="poly-loader"></div>
+                            <div class="poly-loader-text">SCANNING GLOBAL NEWS...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- POLYMARKET COMPOSITE MODAL (Side-by-Side on Desktop) -->
+    <div id="poly-composite-modal" class="modal">
+        <div class="poly-composite-content">
+            <!-- POLYMARKET ANALYTICS SIDE -->
+            <div id="polymarket-modal" class="poly-modal-side">
+                <div class="panel-header">
+                    <span>POLYMARKET FILTER <span id="poly-header-count"
+                            style="color: #ffcc00; margin-left: 5px;">(0)</span></span>
+                    <span id="close-poly-btn" class="cursor-pointer mobile-only">[X]</span>
+                </div>
+                <div class="panel-content">
+                    <p style="font-size: 11px; color: #888; margin-bottom: 15px;">
+                        Tracking high-volume unresolved markets. Use the settings tab to enable/disable the stream.
+                    </p>
+
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>KEYWORD FILTER</span>
+                        </div>
+                        <p class="modal-desc-text" style="font-size: 10px; color: #888;">Live Market Analytics</p>
+
+                        <div id="poly-tag-container" class="poly-tag-container">
+                            <div id="poly-tag-list" class="poly-tag-list"></div>
+                            <input type="text" id="poly-tag-input" placeholder="Type keyword + space/comma..."
+                                class="poly-tag-input">
+                        </div>
+                    </div>
+
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>MINIMUM CHANCE %</span>
+                            <span id="poly-chance-value">30%</span>
+                        </div>
+                        <input type="range" id="poly-chance-slider" min="0" max="100" step="1" value="30"
+                            oninput="document.getElementById('poly-chance-value').textContent = this.value + '%'; if(typeof polyMinChance !== 'undefined') polyMinChance = parseInt(this.value);">
+                    </div>
+
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>MINIMUM 24H VOLUME</span>
+                        </div>
+                        <div class="modal-filter-row" style="display: flex; gap: 10px; margin-top: 8px;">
+                            <div class="poly-input-wrapper">
+                                <span class="poly-currency-symbol">$</span>
+                                <input type="text" id="poly-volume-input" placeholder="5000" class="poly-modal-input"
+                                    inputmode="numeric" pattern="[0-9]*">
+                            </div>
+                            <button id="poly-volume-apply-btn" class="poly-modal-btn">SET</button>
+                        </div>
+                    </div>
+
+                    <div class="slider-container" style="margin-top: 15px;">
+                        <div class="slider-label"
+                            style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>GROUP BY MARKET</span>
+                            <label class="toggle-container" style="width: auto; flex: none;">
+                                <input type="checkbox" id="poly-group-toggle" checked
+                                    title="Groups outcomes into single questions (Dashboard Ticker only)">
+                                <span class="checkmark" style="margin-right: 0;"></span>
+                            </label>
+                        </div>
+                        <p style="font-size: 9px; color: #666; margin-top: 4px; font-family: 'Courier New', monospace;">
+                            *
+                            Affects Dashboard Ticker only. Table View remains raw.</p>
+                    </div>
+
+                    <p id="poly-filter-status"
+                        style="font-size: 10px; color: #888; margin-top: 15px; padding-top: 10px; border-top: 1px solid #1a0d00;">
+                        Showing all markets</p>
+
+                    <button id="poly-show-all-btn" class="cursor-pointer"
+                        style="display: none; width: 100%; height: 45px; margin-top: 15px; background: #1a0d00; border: 1px solid #ff6800; color: #ff6800; font-family: 'Courier New', monospace; font-weight: bold; padding: 12px 0; text-transform: uppercase;">SEE
+                        MARKETS IN TABLE VIEW</button>
+                </div>
+            </div>
+
+            <!-- POLYMARKET FULL LIST SIDE -->
+            <div id="poly-full-list-modal" class="poly-modal-side poly-table-side">
+                <div class="panel-header">
+                    <span>TABLE VIEW</span>
+                    <span id="close-poly-composite-btn" class="cursor-pointer desktop-only">[X]</span>
+                    <span id="close-poly-full-list-btn" class="cursor-pointer mobile-only">[X]</span>
+                </div>
+                <div class="panel-content"
+                    style="overflow: hidden; display: flex; flex-direction: column; flex-grow: 1; min-height: 0;">
+                    <div id="poly-table-toggles" class="view-toggle-container">
+                        <button id="poly-view-all-btn" class="view-toggle-btn">ALL MARKETS (SLOW)</button>
+                        <button id="poly-view-filtered-btn" class="view-toggle-btn active">FILTERED</button>
+                    </div>
+                    <div class="poly-table-search-wrapper">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff6800" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" class="poly-table-search-icon">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" id="poly-table-search" placeholder="SEARCH MARKETS..."
+                            style="width: 100%; box-sizing: border-box; background: transparent; border: none; color: #ff6800; font-family: 'Courier New', monospace; font-size: 12px; padding: 10px 4px; outline: none; text-transform: uppercase;">
+                    </div>
+                    <div id="poly-table-container"
+                        style="overflow-y: auto; flex-grow: 1; margin-top: 10px; min-height: 0;">
+                        <div class="poly-loader-container">
+                            <div class="poly-loader"></div>
+                            <div class="poly-loader-text">SCANNING MARKETS...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- LIVE FEED MODAL -->
+    <div id="live-feed-modal" class="modal">
+        <div class="modal-content live-feed-modal-content">
+            <div class="panel-header">
+                <div>
+                    <span>// LIVE FEED</span>
+                    <span id="feed-scanning" style="margin-left: 10px;"></span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <button id="feed-refresh-btn" class="feed-refresh-btn"
+                        style="border: none; padding: 0 5px; height: 18px; line-height: 18px;">REFRESH</button>
+                    <span id="close-live-feed-btn" class="cursor-pointer">[X]</span>
+                </div>
+            </div>
+            <div class="live-feed-body">
+                <div id="memo-feed-list" class="memo-feed-list">
+                    <div class="feed-placeholder">Loading memos...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- WALLET MODAL -->
+    <div id="wallet-modal" class="modal">
+        <div class="modal-content">
+            <div class="panel-header">
+                <span>// WALLET CONNECTION</span>
+                <span id="close-wallet-btn" class="cursor-pointer">[X]</span>
+            </div>
+            <div class="panel-content">
+                <div id="wallet-status-msg" class="status-msg"
+                    style="display:none; margin-bottom:15px; padding:10px; border:1px solid #ff3333; color:#ff3333; font-size:12px;">
+                </div>
+
+                <div class="wallet-panel"
+                    style="border: 1px solid #331a00; background: rgba(10,10,10,0.8); padding: 15px; margin-bottom: 15px;">
+                    <div class="popup-row">
+                        <span class="popup-label">STATUS:</span>
+                        <span id="w-status" style="color: #ff6800; font-weight: bold; text-transform: uppercase;">NOT
+                            CONNECTED</span>
+                    </div>
+
+                    <div id="w-details" class="hidden">
+                        <div class="popup-row">
+                            <span class="popup-label">ADDRESS:</span>
+                            <div id="w-addr"
+                                style="font-family: 'Courier New', monospace; font-size: 12px; color: #00bfff; word-break: break-all; margin-top: 2px;">
+                            </div>
+                        </div>
+                        <div class="popup-row" style="border-bottom: none;">
+                            <span class="popup-label">BALANCE:</span>
+                            <span id="w-balance" style="font-size: 14px; color: #00ff00; font-weight: bold;"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="w-btn" class="intel-btn"
+                    style="width: 100%; margin-bottom: 15px; justify-content: center;">CONNECT WALLET</button>
+
+                <div
+                    style="font-size: 12px; color: #666; border-top: 1px dashed #331a00; padding-top: 10px; font-family: 'Courier New', monospace;">
+                    Please connect using a Solana-compatible wallet such as Phantom or Solflare to proceed.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEGEND MODAL -->
+    <div id="legend-modal" class="modal">
+        <div class="modal-content">
+            <div class="panel-header">
+                <span>// SHIP DATA LEGEND</span>
+                <span id="close-legend-btn" class="cursor-pointer">[X]</span>
+            </div>
+            <div class="legend-content">
+                <div class="legend-row">
+                    <span class="legend-dot aircraft"></span>
+                    <span>AIRCRAFT (CYAN)</span>
+                    <span class="legend-desc">:: Standard Traffic</span>
+                </div>
+                <div class="legend-row">
+                    <span class="legend-dot vessel"></span>
+                    <span>VESSEL (BLUE)</span>
+                    <span class="legend-desc">:: Verified AIS</span>
+                </div>
+                <div class="legend-row">
+                    <span class="legend-dot fishing"></span>
+                    <span>FISHING (TEAL)</span>
+                    <span class="legend-desc">:: Active Harvesting</span>
+                </div>
+                <div class="legend-row">
+                    <span class="legend-dot loitering"></span>
+                    <span>LOITERING (ORANGE)</span>
+                    <span class="legend-desc">:: Suspicious Low Speed</span>
+                </div>
+                <div class="legend-row">
+                    <span class="legend-dot encounter"></span>
+                    <span>ENCOUNTER (MAGENTA)</span>
+                    <span class="legend-desc">:: Possible Transshipment</span>
+                </div>
+                <div class="legend-row">
+                    <span class="legend-dot dark"></span>
+                    <span class="legend-text-red">DARK / GAP (RED)</span>
+                    <span class="legend-desc">:: AIS Disabled > 6h</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MESH NETWORK LEGEND MODAL -->
+    <div id="mesh-legend-modal" class="modal">
+        <div class="modal-content">
+            <div class="panel-header">
+                <span>// MESH NETWORK LEGEND</span>
+                <span id="close-mesh-legend-btn" class="cursor-pointer">[X]</span>
+            </div>
+            <div class="legend-content">
+                <div class="mesh-legend-section">
+                    <div class="mesh-legend-title">MESHTASTIC</div>
+                    <div class="legend-row">
+                        <span class="legend-dot meshtastic"></span>
+                        <span>MESHTASTIC NODE (RED)</span>
+                        <span class="legend-desc">:: LoRa Mesh Network</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="mesh-legend-title">MESHCORE</div>
+                    <div class="legend-row">
+                        <span class="legend-dot meshcore-client"></span>
+                        <span>CLIENT (BLUE)</span>
+                        <span class="legend-desc">:: MeshCore Client Node</span>
+                    </div>
+                    <div class="legend-row">
+                        <span class="legend-dot meshcore-repeater"></span>
+                        <span>REPEATER (ORANGE)</span>
+                        <span class="legend-desc">:: MeshCore Repeater Node</span>
+                    </div>
+                    <div class="legend-row">
+                        <span class="legend-dot meshcore-room"></span>
+                        <span>ROOM SERVER (GREEN)</span>
+                        <span class="legend-desc">:: MeshCore Room Server</span>
+                    </div>
+                    <div class="legend-row">
+                        <span class="legend-dot meshcore-sensor"></span>
+                        <span>SENSOR (MAGENTA)</span>
+                        <span class="legend-desc">:: MeshCore Sensor Node</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SATELLITE FILTER MODAL -->
+    <div id="satellite-filter-modal" class="modal">
+        <div class="modal-content">
+            <div class="panel-header">
+                <span>// SATELLITE FILTER</span>
+                <span id="close-satellite-filter-btn" class="cursor-pointer">[X]</span>
+            </div>
+            <div class="filter-content">
+                <p class="modal-desc-text">Select satellite categories to display:</p>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <button id="satellite-toggle-all-btn" class="filter-toggle-btn">DESELECT ALL</button>
+                </div>
+                <label class="toggle-container">
+                    <input type="checkbox" id="filter-weather" checked>
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">WEATHER <span class="filter-count"
+                            id="count-weather">(0)</span></span>
+                </label>
+                <label class="toggle-container">
+                    <input type="checkbox" id="filter-noaa" checked>
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">NOAA <span class="filter-count"
+                            id="count-noaa">(0)</span></span>
+                </label>
+                <label class="toggle-container">
+                    <input type="checkbox" id="filter-gps" checked>
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">GPS <span class="filter-count"
+                            id="count-gps">(0)</span></span>
+                </label>
+                <label class="toggle-container">
+                    <input type="checkbox" id="filter-glonass" checked>
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">GLONASS <span class="filter-count"
+                            id="count-glonass">(0)</span></span>
+                </label>
+                <label class="toggle-container">
+                    <input type="checkbox" id="filter-galileo" checked>
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">GALILEO <span class="filter-count"
+                            id="count-galileo">(0)</span></span>
+                </label>
+                <label class="toggle-container">
+                    <input type="checkbox" id="filter-beidou" checked>
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">BEIDOU <span class="filter-count"
+                            id="count-beidou">(0)</span></span>
+                </label>
+                <label class="toggle-container">
+                    <input type="checkbox" id="filter-cubesat" checked>
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">CUBESAT <span class="filter-count"
+                            id="count-cubesat">(0)</span></span>
+                </label>
+                <label class="toggle-container">
+                    <input type="checkbox" id="filter-oneweb" checked>
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">ONEWEB <span class="filter-count"
+                            id="count-oneweb">(0)</span></span>
+                </label>
+                <label class="toggle-container">
+                    <input type="checkbox" id="filter-planet" checked>
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">PLANET <span class="filter-count"
+                            id="count-planet">(0)</span></span>
+                </label>
+                <label class="toggle-container">
+                    <input type="checkbox" id="filter-starlink" checked>
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">STARLINK <span class="filter-count"
+                            id="count-starlink">(0)</span></span>
+                </label>
+                <label class="toggle-container">
+                    <input type="checkbox" id="filter-other" checked>
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">OTHER <span class="filter-count"
+                            id="count-other">(0)</span></span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div id="status-box">
+        <span class="blink">>></span> STATUS: <span id="loading-text">STANDING BY</span>
+    </div>
+
+    <div id="console-wrapper">
+        <div id="console-header">
+            <span id="console-title">>_ OUTPUT</span>
+            <div><button id="copy-btn" class="console-btn">COPY LOG</button></div>
+        </div>
+        <div id="console-output"></div>
+    </div>
+
+    <!-- GDELT NEWS TICKER -->
+    <div id="news-ticker-row" class="bottom-ticker-row">
+        <div id="news-ticker-btn" class="bottom-ticker-btn" title="GLOBAL NEWS">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path
+                    d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2">
+                </path>
+                <path d="M18 14h-8"></path>
+                <path d="M15 18h-5"></path>
+                <path d="M10 6h8v4h-8V6Z"></path>
+            </svg>
+        </div>
+        <div id="news-ticker-container">
+            <div id="news-ticker-wrapper">
+                <div id="news-ticker-content">
+                    <div class="news-box"><span class="news-item">Initializing global news feed...</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- POLYMARKET DATA TICKER -->
+    <div id="polymarket-ticker-row" class="bottom-ticker-row">
+        <div id="polymarket-ticker-btn" class="bottom-ticker-btn" title="POLYMARKET">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                <polyline points="17 6 23 6 23 12"></polyline>
+            </svg>
+        </div>
+        <div id="polymarket-ticker-container">
+            <div id="polymarket-ticker-wrapper">
+                <div id="polymarket-ticker-content"><span class="poly-item"
+                        style="color: #888; text-transform: uppercase;">INITIALIZING POLYMARKET DATA STREAM...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Radio Now Playing Bar -->
+    <div id="radio-now-playing-bar" class="radio-now-playing-bar-hidden">
+        <div class="radio-now-playing-content">
+            <span class="radio-now-playing-label">NOW PLAYING:</span>
+            <div class="radio-now-playing-text-wrapper">
+                <div class="radio-now-playing-text" id="radio-now-playing-text">--</div>
+            </div>
+            <div class="radio-now-playing-controls">
+                <button id="radio-now-playing-pause" class="radio-now-playing-btn">PAUSE</button>
+                <button id="radio-now-playing-clear" class="radio-now-playing-btn">CLEAR</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MESHTASTIC FILTER MODAL -->
+    <div id="meshtastic-filter-modal" class="modal">
+        <div class="modal-content">
+            <div class="panel-header">
+                <span>// MESHTASTIC FILTER</span>
+                <span id="close-meshtastic-filter-btn" class="cursor-pointer">[X]</span>
+            </div>
+            <div class="panel-content" style="max-height: 400px; overflow-y: auto;">
+                <div style="margin-bottom: 15px; font-size: 11px; color: #ffcc00;">Filter nodes by role:</div>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <button id="meshtastic-toggle-all-btn" class="filter-toggle-btn">DESELECT ALL</button>
+                </div>
+                <label class="toggle-container" style="margin-bottom: 8px;">
+                    <input type="checkbox" id="filter-role-client" checked class="meshtastic-filter-checkbox">
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">CLIENT <span class="filter-count"
+                            id="count-role-client">(0)</span></span>
+                </label>
+                <label class="toggle-container" style="margin-bottom: 8px;">
+                    <input type="checkbox" id="filter-role-client-mute" checked class="meshtastic-filter-checkbox">
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">CLIENT_MUTE <span class="filter-count"
+                            id="count-role-client-mute">(0)</span></span>
+                </label>
+                <label class="toggle-container" style="margin-bottom: 8px;">
+                    <input type="checkbox" id="filter-role-client-base" checked class="meshtastic-filter-checkbox">
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">CLIENT_BASE <span class="filter-count"
+                            id="count-role-client-base">(0)</span></span>
+                </label>
+                <label class="toggle-container" style="margin-bottom: 8px;">
+                    <input type="checkbox" id="filter-role-router" checked class="meshtastic-filter-checkbox">
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">ROUTER <span class="filter-count"
+                            id="count-role-router">(0)</span></span>
+                </label>
+                <label class="toggle-container" style="margin-bottom: 8px;">
+                    <input type="checkbox" id="filter-role-repeater" checked class="meshtastic-filter-checkbox">
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">REPEATER <span class="filter-count"
+                            id="count-role-repeater">(0)</span></span>
+                </label>
+                <label class="toggle-container" style="margin-bottom: 8px;">
+                    <input type="checkbox" id="filter-role-router-late" checked class="meshtastic-filter-checkbox">
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">ROUTER_LATE <span class="filter-count"
+                            id="count-role-router-late">(0)</span></span>
+                </label>
+                <label class="toggle-container" style="margin-bottom: 8px;">
+                    <input type="checkbox" id="filter-role-tracker" checked class="meshtastic-filter-checkbox">
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">TRACKER <span class="filter-count"
+                            id="count-role-tracker">(0)</span></span>
+                </label>
+                <label class="toggle-container" style="margin-bottom: 8px;">
+                    <input type="checkbox" id="filter-role-sensor" checked class="meshtastic-filter-checkbox">
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">SENSOR <span class="filter-count"
+                            id="count-role-sensor">(0)</span></span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- MESHCORE FILTER MODAL -->
+    <div id="meshcore-filter-modal" class="modal">
+        <div class="modal-content">
+            <div class="panel-header">
+                <span>// MESHCORE FILTER</span>
+                <span id="close-meshcore-filter-btn" class="cursor-pointer">[X]</span>
+            </div>
+            <div class="panel-content" style="max-height: 400px; overflow-y: auto;">
+                <div style="margin-bottom: 15px; font-size: 11px; color: #ffcc00;">Filter nodes by type:</div>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <button id="meshcore-toggle-all-btn" class="filter-toggle-btn">DESELECT ALL</button>
+                </div>
+                <label class="toggle-container" style="margin-bottom: 8px;">
+                    <input type="checkbox" id="filter-type-client" checked class="meshcore-filter-checkbox">
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">CLIENT <span class="filter-count"
+                            id="count-type-client">(0)</span></span>
+                </label>
+                <label class="toggle-container" style="margin-bottom: 8px;">
+                    <input type="checkbox" id="filter-type-repeater" checked class="meshcore-filter-checkbox">
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">REPEATER <span class="filter-count"
+                            id="count-type-repeater">(0)</span></span>
+                </label>
+                <label class="toggle-container" style="margin-bottom: 8px;">
+                    <input type="checkbox" id="filter-type-room" checked class="meshcore-filter-checkbox">
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">ROOM SERVER <span class="filter-count"
+                            id="count-type-room">(0)</span></span>
+                </label>
+                <label class="toggle-container" style="margin-bottom: 8px;">
+                    <input type="checkbox" id="filter-type-sensor" checked class="meshcore-filter-checkbox">
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">SENSOR <span class="filter-count"
+                            id="count-type-sensor">(0)</span></span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- FLIGHT LEGEND MODAL -->
+    <div id="flight-legend-modal" class="modal">
+        <div class="modal-content">
+            <div class="panel-header">
+                <span>// FLIGHT LEGEND</span>
+                <span id="close-flight-legend-btn" class="cursor-pointer">[X]</span>
+            </div>
+            <div class="legend-content">
+                <div class="legend-row">
+                    <span class="legend-dot flight-verified"></span>
+                    <span>VERIFIED (ORANGE)</span>
+                    <span class="legend-desc">:: Standard Traffic</span>
+                </div>
+                <div class="legend-row">
+                    <span class="legend-dot flight-nosquawk"></span>
+                    <span>NO SQUAWK (CYAN)</span>
+                    <span class="legend-desc">:: No Transponder Code</span>
+                </div>
+                <div class="legend-row">
+                    <span class="legend-dot flight-nocallsign"></span>
+                    <span>NO CALLSIGN (GREEN)</span>
+                    <span class="legend-desc">:: Identity Hidden</span>
+                </div>
+                <div class="legend-row">
+                    <span class="legend-dot" style="background: #8e44ad;"></span>
+                    <span>MILITARY (PURPLE)</span>
+                    <span class="legend-desc">:: Defense / Govt</span>
+                </div>
+                <div class="legend-row">
+                    <span class="legend-dot" style="background: #7f8c8d;"></span>
+                    <span>LADD (GREY)</span>
+                    <span class="legend-desc">:: Limiting Data Displayed</span>
+                </div>
+                <div class="legend-row">
+                    <span class="legend-dot" style="background: #00ced1;"></span>
+                    <span>PIA (TURQUOISE)</span>
+                    <span class="legend-desc">:: Private ICAO Address</span>
+                </div>
+                <div class="legend-row">
+                    <span class="legend-dot flight-alert"></span>
+                    <span class="legend-text-red">ALERT (RED)</span>
+                    <span class="legend-desc">:: Emergency / SPI</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- FLIGHT FILTER MODAL -->
+    <div id="flight-filter-modal" class="modal">
+        <div class="modal-content">
+            <div class="panel-header"
+                style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 5px;">
+                <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                    <span>// FLIGHT FILTER</span>
+                    <span class="mobile-hidden"
+                        style="font-size: 9px; color: #444; font-family: 'Courier New', monospace; letter-spacing: 1px; text-transform: uppercase;">
+                        FETCHED: <span id="flight-total-fetched" style="color: #ff6800; font-weight: bold;">0</span>
+                        SHOWN: <span id="flight-total-shown" style="color: #00ff00; font-weight: bold;">0</span>
+                    </span>
+                </div>
+                <span id="close-flight-filter-btn" class="cursor-pointer">[X]</span>
+            </div>
+            <div class="panel-content" style="max-height: 550px; overflow-y: auto;">
+                <label class="toggle-container"
+                    style="margin-bottom: 12px; border-bottom: 1px dashed #331a00; padding-bottom: 8px;">
+                    <input type="checkbox" id="trails-toggle">
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">SHOW TRAILS</span>
+                </label>
+                <div style="margin-bottom: 10px; font-size: 11px; color: #ffcc00;">Filter aircraft by type:</div>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <button id="flight-toggle-all-btn" class="filter-toggle-btn">DESELECT ALL</button>
+                </div>
+
+
+
+
+                <label class="toggle-container" style="margin-bottom: 8px;">
+                    <input type="checkbox" id="filter-flight-standard" checked class="flight-filter-checkbox">
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">VERIFIED TRAFFIC <span class="filter-count"
+                            id="count-flight-standard">(0)</span></span>
+                </label>
+                <label class="toggle-container" style="margin-bottom: 8px;">
+                    <input type="checkbox" id="filter-flight-military" checked class="flight-filter-checkbox">
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">MILITARY <span class="filter-count"
+                            id="count-flight-military">(0)</span></span>
+                </label>
+                <label class="toggle-container" style="margin-bottom: 8px;">
+                    <input type="checkbox" id="filter-flight-pia" checked class="flight-filter-checkbox">
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">AIRCRAFTS WITH PRIVATE PIA ADDRESSES <span
+                            class="filter-count" id="count-flight-pia">(0)</span></span>
+                </label>
+                <label class="toggle-container" style="margin-bottom: 8px;">
+                    <input type="checkbox" id="filter-flight-ldd" checked class="flight-filter-checkbox">
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">AIRCRAFTS LIMITING DATA DISPLAYED <span class="filter-count"
+                            id="count-flight-ladd">(0)</span></span>
+                </label>
+                <label class="toggle-container" style="margin-bottom: 8px;">
+                    <input type="checkbox" id="filter-flight-ghost" checked class="flight-filter-checkbox">
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">NO CALLSIGN <span class="filter-count"
+                            id="count-flight-ghost">(0)</span></span>
+                </label>
+                <label class="toggle-container" style="margin-bottom: 8px;">
+                    <input type="checkbox" id="filter-flight-nosquawk" checked class="flight-filter-checkbox">
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small">NO SQUAWK CODE <span class="filter-count"
+                            id="count-flight-nosquawk">(0)</span></span>
+                </label>
+                <label class="toggle-container" style="margin-bottom: 8px;">
+                    <input type="checkbox" id="filter-flight-alert" checked class="flight-filter-checkbox">
+                    <span class="checkmark checkmark-small"></span>
+                    <span class="toggle-label label-small" style="color: #ff3333;">ALERT <span class="filter-count"
+                            id="count-flight-alert">(0)</span></span>
+                </label>
+
+                <div class="slider-container" style="margin-top: 20px;">
+                    <div class="slider-label" style="display: flex; align-items: center; justify-content: flex-start;">
+                        <span style="flex-shrink: 0; margin-right: 10px;">SQUAWK FILTER</span>
+                        <div
+                            style="position: relative; flex-grow: 1; max-width: 120px; display: flex; align-items: center;">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff6800"
+                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                                style="position: absolute; left: 7px; pointer-events: none;">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                            <input type="text" id="flight-squawk-input" placeholder="SEARCH..."
+                                style="width: 100%; background: rgba(51, 26, 0, 0.5); border: 1px solid #331a00; color: #ff6800; font-family: 'Courier New', monospace; font-size: 11px; padding: 4px 7px 4px 24px; outline: none; text-transform: uppercase;">
+                        </div>
+                        <div id="squawk-expand-btn-container"
+                            style="display: flex; align-items: center; flex-shrink: 0; margin-left: 10px;"></div>
+                        <span id="squawk-clear-btn"
+                            style="font-size: 9px; cursor: pointer; color: #888; text-decoration: underline; flex-shrink: 0; margin-left: 10px; display: none;">CLEAR</span>
+                    </div>
+                    <div id="flight-squawk-container" class="poly-tag-container" style="margin-top: 5px;">
+                        <div id="flight-squawk-list" class="poly-tag-list"></div>
+                    </div>
+                </div>
+
+                <div class="slider-container" style="margin-top: 20px;">
+                    <div class="slider-label">
+                        <span>MIN ALTITUDE</span>
+                        <span id="flight-alt-value">0 FT</span>
+                    </div>
+                    <input type="range" id="flight-alt-slider" min="0" max="45000" step="1000" value="0">
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 20px;">
+                    <span style="color: #ff6800; font-weight: bold;">REFRESH</span>
+                    <div class="poll-controls"
+                        style="margin: 0; width: fit-content; padding: 5px 10px; display: flex; align-items: center; gap: 5px;">
+                        <span id="poll-value" class="poll-val-spacing">1m</span>
+                        <button id="poll-down" class="poll-btn">▼</button>
+                        <button id="poll-up" class="poll-btn">▲</button>
+                        <button id="step-btn" class="step-btn">±10s</button>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+
+    <!-- EARTHQUAKE FILTER MODAL -->
+    <div id="earthquake-filter-modal" class="modal">
+        <div class="modal-content">
+            <div class="panel-header">
+                <span>// EARTHQUAKE SETTINGS</span>
+                <span id="close-earthquake-filter-btn" class="cursor-pointer">[X]</span>
+            </div>
+            <div class="panel-content">
+                <div class="slider-container" style="margin-bottom: 20px;">
+                    <div class="slider-label">
+                        <span>TIMEFRAME</span>
+                    </div>
+                    <div class="unit-toggle-wrapper" style="margin-top: 8px; border: none; background: none; gap: 5px;">
+                        <div class="unit-option quake-time-btn" data-value="hour" style="border: 1px solid #ff6800;">1H
+                        </div>
+                        <div class="unit-option quake-time-btn active" data-value="day"
+                            style="border: 1px solid #ff6800;">1D</div>
+                        <div class="unit-option quake-time-btn" data-value="week" style="border: 1px solid #ff6800;">7D
+                        </div>
+                        <div class="unit-option quake-time-btn" data-value="month" style="border: 1px solid #ff6800;">
+                            30D</div>
+                    </div>
+                </div>
+
+                <div class="control-group" style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; color: #ff6800; font-size: 11px;">MIN
+                        MAGNITUDE</label>
+                    <select id="quake-mag-select"
+                        style="width: 100%; background: #1a0d00; border: 1px solid #ff6800; color: #ff6800; padding: 8px; font-family: 'Courier New', monospace;">
+                        <option value="all">All Earthquakes</option>
+                        <option value="1.0">M1.0+</option>
+                        <option value="2.5" selected>M2.5+</option>
+                        <option value="4.5">M4.5+ (Significant)</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 20px;">
+                    <span style="color: #ff6800; font-weight: bold;">REFRESH</span>
+                    <div class="poll-controls"
+                        style="margin: 0; width: fit-content; padding: 5px 10px; display: flex; align-items: center; gap: 5px;">
+                        <span id="quake-poll-value" class="poll-val-spacing">5m</span>
+                        <button id="quake-poll-down" class="poll-btn">▼</button>
+                        <button id="quake-poll-up" class="poll-btn">▲</button>
+                        <button id="quake-step-btn" class="step-btn">±1m</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <!-- JS Modules -->
+    <script src="js/utils.js?v=114"></script>
+    <script src="js/globals.js?v=114" defer></script>
+    <script src="js/flights.js?v=114" defer></script>
+    <script src="js/space.js?v=114" defer></script>
+    <script src="js/ships.js?v=114" defer></script>
+    <script src="js/radio.js?v=114" defer></script>
+    <script src="js/cables.js?v=114" defer></script>
+    <script src="js/map.js?v=114" defer></script>
+    <script src="js/ui.js?v=114" defer></script>
+    <script src="js/news.js?v=114" defer></script>
+    <script src="js/polymarket.js?v=114" defer></script>
+    <script src="js/earthquakes.js?v=114" defer></script>
+
+</body>
+
+</html>

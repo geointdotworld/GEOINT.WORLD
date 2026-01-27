@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEOINT.WORLD // RADIO REPEATERS</title>
+    <link rel="icon" type="image/png" href="../../favicon/favicon-32x32.png">
+    <meta name="theme-color" content="#ff6800">
+    <link rel="stylesheet" href="../style.css?v=114">
+</head>
+
+<body>
+    <div class="scanlines"></div>
+    <div class="grid-bg"></div>
+    <div class="app-container">
+        <header class="top-bar">
+            <div class="brand">
+                <a href="../../index.html">GEOINT.WORLD</a>
+                <span>//</span>
+                <a href="../introduction/"><span class="mobile-docs-text">DOCS</span><span
+                        class="desktop-docs-text">DOCUMENTATION</span></a>
+            </div>
+            <nav class="top-nav">
+                <a href="../../datamap.html">LAUNCH <span class="desktop-text">APP</span></a>
+                <a href="../../index.html" class="return-link">
+                    <span>
+                        << RETURN</span>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M3 9L12 2L21 9V22H3V9Z" />
+                                <path d="M9 22V12H15V22" />
+                            </svg>
+                </a>
+            </nav>
+        </header>
+
+        <div class="main-content-wrapper">
+            <aside class="sidebar">
+                <div class="nav-group">
+                    <input type="radio" name="nav-accordion" id="nav-gen" class="nav-toggle">
+                    <label for="nav-gen" class="nav-header">GENERAL</label>
+                    <a href="../introduction/" class="nav-item">INTRODUCTION</a>
+                    <a href="../getting-started/" class="nav-item">GETTING STARTED</a>
+                    <a href="../inscriptions/" class="nav-item">INSCRIPTIONS</a>
+                    <a href="../roadmap/" class="nav-item">ROADMAP</a>
+                </div>
+                <div class="nav-group">
+                    <input type="radio" name="nav-accordion" id="nav-sea" class="nav-toggle">
+                    <label for="nav-sea" class="nav-header">SEA AND SKY</label>
+                    <a href="../flight-data/" class="nav-item">FLIGHT DATA</a>
+                    <a href="../space-data/" class="nav-item">SPACE DATA</a>
+                    <a href="../maritime/" class="nav-item">SHIP DATA</a>
+                </div>
+                <div class="nav-group">
+                    <input type="radio" name="nav-accordion" id="nav-com" class="nav-toggle" checked>
+                    <label for="nav-com" class="nav-header">COMMUNICATIONS</label>
+                    <a href="../radio-stations/" class="nav-item">RADIO STATIONS</a>
+                    <a href="../radio-repeaters/" class="nav-item active">RADIO REPEATERS</a>
+                    <a href="../lora-mesh/" class="nav-item">LoRa</a>
+                    <a href="../deep-sea-cables/" class="nav-item">DEEP SEA CABLES</a>
+                </div>
+                <div class="nav-group">
+                    <input type="radio" name="nav-accordion" id="nav-news" class="nav-toggle">
+                    <label for="nav-news" class="nav-header">NEWS</label>
+                    <a href="../news/" class="nav-item">NEWS FEED</a>
+                    <a href="../prediction-markets/" class="nav-item">PREDICTION FEED</a>
+                </div>
+                <div class="nav-group">
+                    <input type="radio" name="nav-accordion" id="nav-nat" class="nav-toggle">
+                    <label for="nav-nat" class="nav-header">NATURAL</label>
+                    <a href="../earthquakes/" class="nav-item">EARTHQUAKES</a>
+                </div>
+            </aside>
+            <main class="content">
+                <section class="doc-section">
+                    <h1>RADIO REPEATERS</h1>
+                    <p class="lead">Provides frequency, offset, tone, and location data for repeaters worldwide.
+                        Crucial for understanding local communication infrastructure.</p>
+
+                    <div
+                        style="border: 1px dotted var(--primary); padding: 50px 20px; background: rgba(255,104,0,0.02); text-align: center; margin-top: 60px; border-radius: 2px;">
+                        <h3 style="color: var(--primary); margin: 0; letter-spacing: 2px;">MODULE UNDER DEVELOPMENT</h3>
+                    </div>
+                </section>
+                <div class="legal-footer">
+                    <a href="../../legal.html?from=docs">LEGAL</a> | <a
+                        href="mailto:CONTACT@GEOINT.WORLD">CONTACT@GEOINT.WORLD</a>
+                </div>
+            </main>
+        </div>
+        <script>
+            // Allow radio buttons to be unchecked (close accordion)
+            document.querySelectorAll('.nav-toggle').forEach(radio => {
+                radio.addEventListener('click', function (e) {
+                    if (this.dataset.checked === 'true') {
+                        this.checked = false;
+                        this.dataset.checked = 'false';
+                    } else {
+                        document.querySelectorAll('.nav-toggle').forEach(r => r.dataset.checked = 'false');
+                        this.dataset.checked = 'true';
+                    }
+                });
+            });
+        </script>
+</body>
+
+</html>

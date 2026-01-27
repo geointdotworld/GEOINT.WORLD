@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEOINT.WORLD // LORA MESH</title>
+    <link rel="icon" type="image/png" href="../../favicon/favicon-32x32.png">
+    <meta name="theme-color" content="#ff6800">
+    <link rel="stylesheet" href="../style.css?v=114">
+</head>
+
+<body>
+    <div class="scanlines"></div>
+    <div class="grid-bg"></div>
+    <div class="app-container">
+        <header class="top-bar">
+            <div class="brand">
+                <a href="../../index.html">GEOINT.WORLD</a>
+                <span>//</span>
+                <a href="../introduction/"><span class="mobile-docs-text">DOCS</span><span
+                        class="desktop-docs-text">DOCUMENTATION</span></a>
+            </div>
+            <nav class="top-nav">
+                <a href="../../datamap.html">LAUNCH <span class="desktop-text">APP</span></a>
+                <a href="../../index.html" class="return-link">
+                    <span>
+                        << RETURN</span>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M3 9L12 2L21 9V22H3V9Z" />
+                                <path d="M9 22V12H15V22" />
+                            </svg>
+                </a>
+            </nav>
+        </header>
+
+        <div class="main-content-wrapper">
+            <aside class="sidebar">
+                <div class="nav-group">
+                    <input type="radio" name="nav-accordion" id="nav-gen" class="nav-toggle">
+                    <label for="nav-gen" class="nav-header">GENERAL</label>
+                    <a href="../introduction/" class="nav-item">INTRODUCTION</a>
+                    <a href="../getting-started/" class="nav-item">GETTING STARTED</a>
+                    <a href="../inscriptions/" class="nav-item">INSCRIPTIONS</a>
+                    <a href="../roadmap/" class="nav-item">ROADMAP</a>
+                </div>
+                <div class="nav-group">
+                    <input type="radio" name="nav-accordion" id="nav-sea" class="nav-toggle">
+                    <label for="nav-sea" class="nav-header">SEA AND SKY</label>
+                    <a href="../flight-data/" class="nav-item">FLIGHT DATA</a>
+                    <a href="../space-data/" class="nav-item">SPACE DATA</a>
+                    <a href="../maritime/" class="nav-item">SHIP DATA</a>
+                </div>
+                <div class="nav-group">
+                    <input type="radio" name="nav-accordion" id="nav-com" class="nav-toggle" checked>
+                    <label for="nav-com" class="nav-header">COMMUNICATIONS</label>
+                    <a href="../radio-stations/" class="nav-item">RADIO STATIONS</a>
+                    <a href="../radio-repeaters/" class="nav-item">RADIO REPEATERS</a>
+                    <a href="../lora-mesh/" class="nav-item active">LoRa</a>
+                    <a href="../deep-sea-cables/" class="nav-item">DEEP SEA CABLES</a>
+                </div>
+                <div class="nav-group">
+                    <input type="radio" name="nav-accordion" id="nav-news" class="nav-toggle">
+                    <label for="nav-news" class="nav-header">NEWS</label>
+                    <a href="../news/" class="nav-item">NEWS FEED</a>
+                    <a href="../prediction-markets/" class="nav-item">PREDICTION FEED</a>
+                </div>
+                <div class="nav-group">
+                    <input type="radio" name="nav-accordion" id="nav-nat" class="nav-toggle">
+                    <label for="nav-nat" class="nav-header">NATURAL</label>
+                    <a href="../earthquakes/" class="nav-item">EARTHQUAKES</a>
+                </div>
+            </aside>
+            <main class="content">
+                <section class="doc-section">
+                    <h1>LORA MESH NETWORKS</h1>
+                    <p>Visualization of decentralized LoRaWAN and Meshtastic nodes.</p>
+
+                    <h2>DATA SOURCES</h2>
+                    <p>The GEOINT.WORLD LoRa Mesh module integrates real-time node metadata from decentralized community
+                        mapping projects.</p>
+
+                    <div class="feature-grid"
+                        style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+                        <div class="feature-card" style="padding: 1rem;">
+                            <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem;">
+                                <a href="https://meshmap.net/" target="_blank" class="external-link">
+                                    MESHMAP / MESHCORE
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                        <polyline points="15 3 21 3 21 9"></polyline>
+                                        <line x1="10" y1="14" x2="21" y2="3"></line>
+                                    </svg>
+                                </a>
+                            </h4>
+                            <p style="font-size: 0.85rem; margin: 0; line-height: 1.4;">Primary source for tracking
+                                public
+                                nodes in the Meshtastic network, revealing off-grid communication density and coverage
+                                areas across the globe.</p>
+                        </div>
+                    </div>
+
+                    <h2>FILTERS & CONTROLS</h2>
+                    <p>The LoRa Mesh module provides two separate filtering systems to control which nodes are displayed
+                        on the map.</p>
+
+                    <h3>MESHTASTIC FILTER</h3>
+                    <p>Filter Meshtastic nodes by their assigned role. Multiple roles can be selected simultaneously,
+                        and the system displays nodes matching <strong>any</strong> selected role.</p>
+
+                    <p><strong>Available Roles:</strong></p>
+                    <ul style="margin: 1rem 0; padding-left: 1.5rem;">
+                        <li style="margin-bottom: 0.5rem;"><code>CLIENT</code> — Standard user nodes</li>
+                        <li style="margin-bottom: 0.5rem;"><code>CLIENT_MUTE</code> — Muted client nodes (receive-only)
+                        </li>
+                        <li style="margin-bottom: 0.5rem;"><code>CLIENT_BASE</code> — Base station client nodes</li>
+                        <li style="margin-bottom: 0.5rem;"><code>ROUTER</code> — Routing nodes for mesh network relay
+                        </li>
+                        <li style="margin-bottom: 0.5rem;"><code>REPEATER</code> — Dedicated repeater nodes for coverage
+                            extension</li>
+                        <li style="margin-bottom: 0.5rem;"><code>ROUTER_LATE</code> — Low-power routing nodes</li>
+                        <li style="margin-bottom: 0.5rem;"><code>TRACKER</code> — GPS tracking nodes</li>
+                        <li style="margin-bottom: 0.5rem;"><code>SENSOR</code> — Environmental or telemetry sensor nodes
+                        </li>
+                    </ul>
+
+                    <p>Use the "DESELECT ALL" button to quickly clear all role filters.</p>
+
+                    <h3>MESHCORE FILTER</h3>
+                    <p>Filter Meshcore nodes by their type classification. This filter operates independently from the
+                        Meshtastic role filter.</p>
+
+                    <p><strong>Available Types:</strong></p>
+                    <ul style="margin: 1rem 0; padding-left: 1.5rem;">
+                        <li style="margin-bottom: 0.5rem;"><code>CLIENT</code> — Standard user nodes</li>
+                        <li style="margin-bottom: 0.5rem;"><code>REPEATER</code> — Infrastructure nodes extending
+                            network coverage</li>
+                        <li style="margin-bottom: 0.5rem;"><code>ROOM_SERVER</code> — Hub nodes managing localized mesh
+                            groups or "rooms"</li>
+                        <li style="margin-bottom: 0.5rem;"><code>SENSOR</code> — Automated nodes relaying environmental
+                            data</li>
+                    </ul>
+
+                    <p>Use the "DESELECT ALL" button to quickly clear all type filters.</p>
+
+                    <blockquote>
+                        Filter counts displayed next to each option (e.g., <code>(0)</code>) show the number of
+                        currently visible nodes matching that classification.
+                    </blockquote>
+
+                    <h2>NODE COLOR LEGEND</h2>
+                    <p>Nodes are color-coded on the map for quick visual identification:</p>
+
+                    <p><strong>MESHTASTIC</strong></p>
+                    <ul style="list-style: none; padding-left: 0;">
+                        <li style="margin-bottom: 0.5rem;"><strong class="highlight-red">MESHTASTIC NODE (RED)</strong>
+                            :: LoRa Mesh Network</li>
+                    </ul>
+
+                    <p><strong>MESHCORE</strong></p>
+                    <ul style="list-style: none; padding-left: 0;">
+                        <li style="margin-bottom: 0.5rem;"><strong class="highlight-blue">CLIENT (BLUE)</strong> ::
+                            MeshCore Client Node</li>
+                        <li style="margin-bottom: 0.5rem;"><strong class="highlight-orange">REPEATER (ORANGE)</strong>
+                            :: MeshCore Repeater Node</li>
+                        <li style="margin-bottom: 0.5rem;"><strong class="highlight-green">ROOM SERVER (GREEN)</strong>
+                            :: MeshCore Room Server</li>
+                        <li style="margin-bottom: 0.5rem;"><strong class="highlight-magenta">SENSOR (MAGENTA)</strong>
+                            :: MeshCore Sensor Node</li>
+                    </ul>
+
+                    <blockquote>
+                        Use the <span class="info-icon">i</span> icon next to the LoRa layer in the
+                        application to access the real-time legend and node type classifications.
+                    </blockquote>
+
+
+                    <h2>TELEMETRY FIELDS</h2>
+                    <p>Inspecting a LoRa node reveals the following raw telemetry data:</p>
+                    <pre><code>{
+  "nodeId": "meshcore-b22ed7344cb82128e134162520c4661f29b11295dc7c36857338a21977b2bb0f",
+  "nodeName": "kRoom",
+  "meshType": "meshcore",
+  "nodeType": "Room Server",
+  "lastSeen": "1/5/2026, 7:15:28 PM",
+  "publicKey": "b22ed7344cb82128e134162520c4661f29b11295dc7c36857338a21977b2bb0f",
+  "link": "meshcore://1100b22ed7344cb82128e134162520c4661f29b11295dc7c36857338a21977b2bb0fe01b5c6928b30e9f4043454eebda6a19426fd6ad581974e53a77e7f1519b754de985ebfaa1aac5de895efdd97d37d7c59c7b951879521376a6351f68ad25a649e02b2803931ff65b03b691de006b526f6f6d",
+  "insertedDate": "2026-01-05T20:08:40.000Z",
+  "updatedDate": "2026-01-05T20:21:55.000Z",
+  "frequency": 869.525,
+  "bandwidth": 250,
+  "codingRate": 5,
+  "spreadingFactor": 11,
+  "signalColor": "#00ff00"
+}</code></pre>
+
+                </section>
+                <div class="legal-footer">
+                    <a href="../../legal.html?from=docs">LEGAL</a> | <a
+                        href="mailto:CONTACT@GEOINT.WORLD">CONTACT@GEOINT.WORLD</a>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script>
+        // Allow radio buttons to be unchecked (close accordion)
+        document.querySelectorAll('.nav-toggle').forEach(radio => {
+            radio.addEventListener('click', function (e) {
+                if (this.dataset.checked === 'true') {
+                    this.checked = false;
+                    this.dataset.checked = 'false';
+                } else {
+                    document.querySelectorAll('.nav-toggle').forEach(r => r.dataset.checked = 'false');
+                    this.dataset.checked = 'true';
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
