@@ -1,5 +1,5 @@
 # GEOINT.WORLD
-
+![GEOINT.WORLD Platform](./assets/readme_image.png)
 Open-source geospatial intelligence platform for real-time monitoring of aviation, maritime, space, and global events on a unified map interface. Inscribe data points into Solana with this tool.
 
 ## Overview
