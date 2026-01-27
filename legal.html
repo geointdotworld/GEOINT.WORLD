@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEOINT.WORLD | LEGAL</title>
+    <link rel="apple-touch-icon" sizes="57x57" href="favicon/apple-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="favicon/apple-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="favicon/apple-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="favicon/apple-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="favicon/apple-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="favicon/apple-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="favicon/apple-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="favicon/apple-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-icon-180x180.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="favicon/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="favicon/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
+    <link rel="manifest" href="favicon/manifest.json">
+    <meta name="msapplication-TileColor" content="#ff6800">
+    <meta name="msapplication-TileImage" content="favicon/ms-icon-144x144.png">
+    <meta name="theme-color" content="#ff6800">
+    <style>
+        :root {
+            --primary: #ff6800;
+            --bg: #000000;
+            --grid: #1a1a1a;
+            --text-dim: #666;
+            --scanline: rgba(255, 104, 0, 0.03);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--primary);
+            font-family: 'Courier New', Courier, monospace;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+            position: relative;
+            padding-bottom: 80px;
+        }
+
+        /* Scanline Overlay */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom,
+                    var(--scanline) 50%,
+                    transparent 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 100;
+            opacity: 0.6;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            padding: 40px;
+            margin-top: 40px;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 40px;
+            text-transform: uppercase;
+            text-align: center;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin: 30px 0 15px 0;
+            text-transform: uppercase;
+            color: #fff;
+            border-left: 4px solid var(--primary);
+            padding-left: 10px;
+        }
+
+        p,
+        li {
+            color: #ccc;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        ul {
+            margin-left: 20px;
+            margin-bottom: 20px;
+        }
+
+        .section-divider {
+            height: 1px;
+            background: rgba(255, 104, 0, 0.3);
+            margin: 40px 0;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: var(--primary);
+            text-decoration: none;
+            border: 1px solid var(--primary);
+            padding: 8px 15px;
+            font-weight: bold;
+            text-transform: uppercase;
+            z-index: 200;
+            background: rgba(0, 0, 0, 0.8);
+            transition: all 0.2s;
+            cursor: pointer;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+        }
+
+        .back-btn:hover {
+            background: var(--primary);
+            color: #000;
+            box-shadow: 0 0 15px var(--primary);
+        }
+
+        .legal-notice {
+            border: 1px solid var(--primary);
+            background: rgba(255, 104, 0, 0.05);
+            padding: 20px;
+            margin-bottom: 30px;
+            font-size: 0.85rem;
+            color: #ffcc00;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                width: 95%;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="scanlines"></div>
+    <button onclick="goBack()" class="back-btn">
+        << RETURN</button>
+
+            <div class="container">
+                <h1>Legal & Compliance</h1>
+
+                <div class="legal-notice">
+                    <strong>DISCLAIMER:</strong> GEOINT.WORLD is an Open Source Intelligence (OSINT) visualization tool
+                    intended for educational and research purposes only. All data displayed is aggregated from publicly
+                    available sources. The developers assume no responsibility for the accuracy of the data or how it is
+                    used by end-users.
+                </div>
+
+                <h2>1. Terms of Service</h2>
+                <p>By accessing or using GEOINT.WORLD, you agree to be bound by these Terms. If you disagree with any
+                    part of the terms, you may not access the service.</p>
+
+                <p><strong>1.1 Acceptable Use</strong><br>
+                    You agree not to use the service for any unlawful purpose or in any way that interrupts, damages, or
+                    impairs the service. You may not attempt to reverse engineer, scrape, or exploit the underlying APIs
+                    beyond the intended visualization interface.</p>
+
+                <p><strong>1.2 Data Accuracy</strong><br>
+                    The data presented (flight paths, maritime positions, satellite orbits, submarine cable networks,
+                    mesh network nodes) is provided "as is" without warranty of any kind. We do not guarantee the
+                    accuracy, completeness, or timeliness of the information.</p>
+
+                <p><strong>1.3 Intellectual Property</strong><br>
+                    The interface design, code, and branding of GEOINT.WORLD are proprietary. The underlying data
+                    remains the property of its respective sources (see Section 3).</p>
+
+                <div class="section-divider"></div>
+
+                <h2>2. Privacy Policy</h2>
+                <p>Your privacy is important to us. This policy outlines how we handle your data.</p>
+
+                <p><strong>2.1 Data Collection</strong><br>
+                    GEOINT.WORLD is a static client-side application. We do not store personal user data, accounts, or
+                    tracking history on our servers. Your browser communicates directly with public data APIs.</p>
+
+                <p><strong>2.2 Third-Party Services</strong><br>
+                    This tool aggregates data from third-party services which may collect their own usage logs. By using
+                    this tool, you acknowledge traffic to:</p>
+                <ul>
+                    <li><strong>OpenSky Network / adsb.lol:</strong> ADS-B flight data.</li>
+                    <li><strong>Global Fishing Watch:</strong> Maritime tracking data.</li>
+                    <li><strong>CelesTrak:</strong> NORAD satellite elements.</li>
+                    <li><strong>TeleGeography / Submarine Cable Map:</strong> Submarine cable network data.</li>
+                    <li><strong>Radio Browser API:</strong> Radio station streaming data and metadata.</li>
+                    <li><strong>RepeaterBook:</strong> Radio repeater directory data.</li>
+                    <li><strong>MeshMap.net:</strong> Meshtastic mesh network node data.</li>
+                    <li><strong>MeshCore.dev:</strong> MeshCore network node data.</li>
+                    <li><strong>The GDELT Project:</strong> Global news tracking and event monitoring.</li>
+                    <li><strong>Polymarket:</strong> Prediction markets and future analytics.</li>
+                    <li><strong>USGS Earthquake API:</strong> Global earthquake and seismic event data.</li>
+                    <li><strong>OpenFreeMap / MapLibre:</strong> Map tiles and rendering.</li>
+                </ul>
+
+                <p><strong>2.3 Cookies & Local Storage</strong><br>
+                    We may use local browser storage (localStorage) solely to save your user preferences (e.g., theme
+                    settings, unit toggles). No tracking cookies are used for advertising purposes.</p>
+
+                <div class="section-divider"></div>
+
+                <h2>3. Data Attribution</h2>
+                <p>We gratefully acknowledge the following sources for making global data accessible:</p>
+                <ul>
+                    <li><strong>Aircraft Data:</strong> The OpenSky Network (https://opensky-network.org) / adsb.lol
+                        (https://adsb.lol)</li>
+                    <li><strong>Maritime Data:</strong> Global Fishing Watch (https://globalfishingwatch.org)</li>
+                    <li><strong>Satellite Data:</strong> CelesTrak (https://celestrak.org)</li>
+                    <li><strong>Submarine Cable Data:</strong> TeleGeography / Submarine Cable Map
+                        (https://www.submarinecablemap.com)</li>
+                    <li><strong>Radio Station Data:</strong> Radio Browser API (https://api.radio-browser.info)</li>
+                    <li><strong>Radio Repeater Data:</strong> RepeaterBook (https://www.repeaterbook.com)</li>
+                    <li><strong>Meshtastic Mesh Network Data:</strong> MeshMap.net (https://meshmap.net)</li>
+                    <li><strong>MeshCore Network Data:</strong> MeshCore.dev (https://map.meshcore.dev)</li>
+                    <li><strong>Global News Data:</strong> The GDELT Project (https://www.gdeltproject.org)</li>
+                    <li><strong>Prediction Market Data:</strong> Polymarket (https://polymarket.com)</li>
+                    <li><strong>Earthquake Data:</strong> United States Geological Survey / USGS
+                        (https://earthquake.usgs.gov)</li>
+                    <li><strong>Geospatial Data:</strong> OpenStreetMap contributors via OpenFreeMap.</li>
+                </ul>
+
+                <div class="section-divider"></div>
+                <div style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
+                    <a href="mailto:CONTACT@GEOINT.WORLD"
+                        style="color: var(--primary); text-decoration: none; font-weight: bold; font-size: 1rem; letter-spacing: 2px;">CONTACT@GEOINT.WORLD</a>
+                </div>
+            </div>
+
+            <script>
+                function goBack() {
+                    // Check URL parameter first
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const from = urlParams.get('from');
+
+                    if (from === 'datamap') {
+                        window.location.href = 'datamap.html';
+                    } else if (from === 'index') {
+                        window.location.href = 'index.html';
+                    } else if (document.referrer && document.referrer.includes('datamap.html')) {
+                        window.location.href = 'datamap.html';
+                    } else if (document.referrer && document.referrer !== window.location.href) {
+                        window.history.back();
+                    } else {
+                        // Fallback to index.html
+                        window.location.href = 'index.html';
+                    }
+                }
+            </script>
+</body>
+
+</html>
