@@ -27,7 +27,7 @@ async function initNewsSystem() {
     }
 
     // 0. Check settings / toggle state
-    const isEnabled = localStorage.getItem('gdelt_enabled') !== 'false'; // Default true
+    const isEnabled = localStorage.getItem('gdelt_enabled') === 'true'; // Default false
     console.log('GDELT: isEnabled =', isEnabled, ', localStorage value =', localStorage.getItem('gdelt_enabled'));
 
     if (typeof logSystem === 'function' && !isEnabled) {

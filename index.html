@@ -14,13 +14,13 @@
     <!-- Preload Application Page and Core Dependencies -->
     <link rel="prerender" href="datamap.html">
     <link rel="prefetch" href="datamap.html">
-    <link rel="stylesheet" href="css/style.css?v=120">
+    <link rel="stylesheet" href="css/style.css?v=140">
     <link rel="prefetch" href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js">
     <link rel="prefetch" href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css">
-    <link rel="prefetch" href="js/utils.js?v=120">
-    <link rel="prefetch" href="js/globals.js?v=120">
-    <link rel="prefetch" href="js/map.js?v=120">
-    <link rel="prefetch" href="js/ui.js?v=120">
+    <link rel="prefetch" href="js/utils.js?v=140">
+    <link rel="prefetch" href="js/globals.js?v=140">
+    <link rel="prefetch" href="js/map.js?v=140">
+    <link rel="prefetch" href="js/ui.js?v=140">
     <link rel="prefetch" href="https://tiles.openfreemap.org/planet">
     <style>
         :root {
@@ -200,7 +200,7 @@
             grid-template-columns: repeat(3, 1fr);
             gap: 20px;
             width: 100%;
-            margin-top: 60px;
+            margin-top: 20px;
             border-top: 1px solid rgba(255, 104, 0, 0.2);
             padding-top: 30px;
         }
@@ -499,6 +499,48 @@
                 letter-spacing: 1px;
             }
         }
+
+        .token-alert {
+            background: rgba(255, 104, 0, 0.1);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 12px 30px;
+            font-size: 1.4rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 35px;
+            box-shadow: 0 0 20px rgba(255, 104, 0, 0.2), inset 0 0 15px rgba(255, 104, 0, 0.1);
+            animation: alertPulse 2s infinite;
+            border-radius: 4px;
+            display: inline-block;
+            text-shadow: 0 0 10px rgba(255, 104, 0, 0.8);
+            transform: scaleY(1.3);
+            transform-origin: center;
+        }
+
+        @keyframes alertPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 20px rgba(255, 104, 0, 0.2), inset 0 0 15px rgba(255, 104, 0, 0.1);
+                transform: scale(1, 1.3);
+            }
+
+            50% {
+                box-shadow: 0 0 35px rgba(255, 104, 0, 0.5), inset 0 0 25px rgba(255, 104, 0, 0.2);
+                transform: scale(1.05, 1.365);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .token-alert {
+                font-size: 0.8rem;
+                padding: 10px 20px;
+                letter-spacing: 1px;
+                width: 90%;
+            }
+        }
     </style>
 </head>
 
@@ -508,10 +550,9 @@
     <div class="grid-floor"></div>
 
     <div class="container">
-        <a href="https://x.com/geointdotworld" target="_blank"
-            style="position: absolute; top: 20px; right: 20px; width: 30px; height: 30px; z-index: 20;">
-            <img src="assets/x_logo.png" alt="X" style="width: 100%; height: 100%; object-fit: contain;">
-        </a>
+
+
+        <a href="ca/" class="token-alert" style="text-decoration: none;">OUR TOKEN IS LIVE: $GEOINT</a>
 
         <h1>GEOINT.WORLD</h1>
 
@@ -521,6 +562,33 @@
         </div>
 
         <a href="datamap.html" class="btn">LAUNCH APP</a>
+
+        <div
+            style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; align-items: center; width: 280px; margin: 30px auto 0; z-index: 20;">
+            <div style="display: flex; justify-content: center;">
+                <a href="https://github.com/geointdotworld" target="_blank"
+                    style="display: block; width: 32px; height: 32px; opacity: 0.7; transition: opacity 0.2s;"
+                    onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">
+                    <img src="assets/github_logo.png" alt="GitHub"
+                        style="width: 100%; height: 100%; object-fit: contain;">
+                </a>
+            </div>
+            <div style="display: flex; justify-content: center;">
+                <a href="https://x.com/geointdotworld" target="_blank"
+                    style="display: block; width: 28px; height: 28px; opacity: 0.7; transition: opacity 0.2s;"
+                    onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">
+                    <img src="assets/x_logo.png" alt="X" style="width: 100%; height: 100%; object-fit: contain;">
+                </a>
+            </div>
+            <div style="display: flex; justify-content: center;">
+                <a href="https://t.me/geointdotworld" target="_blank"
+                    style="display: block; width: 50px; height: 50px; opacity: 0.7; transition: opacity 0.2s;"
+                    onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">
+                    <img src="assets/tele_logo.png" alt="Telegram"
+                        style="width: 100%; height: 100%; object-fit: contain;">
+                </a>
+            </div>
+        </div>
 
         <div class="metrics">
             <div class="metric"><span class="metric-val">GLOBAL</span><span class="metric-label">COVERAGE</span></div>
@@ -534,7 +602,7 @@
     <!-- NEW BUTTON ROW -->
     <div class="quick-links">
         <a href="docs/index.html" class="quick-btn">DOCS</a>
-        <a href="whitepaper.pdf?v=120" target="_blank" class="quick-btn">WHITEPAPER</a>
+        <a href="whitepaper.pdf?v=140" target="_blank" class="quick-btn">WHITEPAPER</a>
     </div>
 
     <div class="info-box">
@@ -759,19 +827,19 @@
                     const link = document.createElement('link');
                     link.rel = 'prefetch';
                     const cacheBusters = {
-                        'datamap.html': 'v=120',
-                        'css/style.css': 'v=120',
-                        'js/utils.js': 'v=120',
-                        'js/polymarket.js': 'v=120',
-                        'js/globals.js': 'v=120',
-                        'js/flights.js': 'v=120',
-                        'js/space.js': 'v=120',
-                        'js/ships.js': 'v=120',
-                        'js/radio.js': 'v=120',
-                        'js/cables.js': 'v=120',
-                        'js/map.js': 'v=120',
-                        'js/ui.js': 'v=120',
-                        'js/news.js': 'v=120'
+                        'datamap.html': 'v=130',
+                        'css/style.css': 'v=130',
+                        'js/utils.js': 'v=130',
+                        'js/polymarket.js': 'v=130',
+                        'js/globals.js': 'v=130',
+                        'js/flights.js': 'v=130',
+                        'js/space.js': 'v=130',
+                        'js/ships.js': 'v=130',
+                        'js/radio.js': 'v=130',
+                        'js/cables.js': 'v=130',
+                        'js/map.js': 'v=130',
+                        'js/ui.js': 'v=130',
+                        'js/news.js': 'v=130'
                     };
                     const version = cacheBusters[asset] || 'v=1';
                     link.href = asset + '?' + version;
@@ -786,10 +854,10 @@
         setTimeout(typeLoop, 1000);
         prefetchApp(); // Start pre-fetching app assets in background
     </script>
-    <script src="js/utils.js?v=120"></script>
-    <script src="js/globals.js?v=120"></script>
-    <script src="js/news.js?v=120" defer></script>
-    <script src="js/polymarket.js?v=120" defer></script>
+    <script src="js/utils.js?v=140"></script>
+    <script src="js/globals.js?v=140"></script>
+    <script src="js/news.js?v=140" defer></script>
+    <script src="js/polymarket.js?v=140" defer></script>
 </body>
 
 </html>

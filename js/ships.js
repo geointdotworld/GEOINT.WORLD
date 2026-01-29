@@ -244,7 +244,7 @@ const updateShipFilters = () => {
 
 // Register with InscriptionRegistry
 if (window.InscriptionRegistry) {
-    window.InscriptionRegistry.register(['ships', 'ships-dots'], {
+    window.InscriptionRegistry.register(['ships', 'ships-dots', 'ship-popup'], {
         hydrate: (data) => {
             if (typeof map === 'undefined' || !map) return null;
             const features = map.querySourceFeatures('gfw-data');

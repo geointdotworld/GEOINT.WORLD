@@ -84,7 +84,7 @@ const MemoFeed = {
     isLoading: false,
     isInitialized: false,
     MEMO_PROGRAM: 'Memo1UhkJRfHyvLMcVucJwxXeuD728EqVDDwQDxFMNo',
-    PDA_ADDRESS: 'JB2bfszU6Xfxy8YiUTbr5sNjmBSGnHcaiUUZDjZ8dsxn',
+    PDA_ADDRESS: 'HQvMbrAMGjMkcobUV56MN9zaryPo9NarLddrEfc1wmLP',
     TARGET_SIGNATURES: 2000, // Max signatures to fetch
     CHUNK_SIZE: 1000, // Max per RPC call
 
@@ -321,9 +321,17 @@ const MemoFeed = {
         // 1. Load Cache & Build Index
         let cachedMemos = [];
         const cachedRaw = localStorage.getItem('cachedMemos');
+        const cachedPDA = localStorage.getItem('cachedPDA');
         const knownSigs = new Set();
 
-        if (cachedRaw) {
+        // CACHE INVALIDATION: If PDA changed, wipe cache
+        if (cachedPDA !== this.PDA_ADDRESS) {
+            console.log('SOL: PDA changed. Clearing cache.');
+            localStorage.removeItem('cachedMemos');
+            localStorage.setItem('cachedPDA', this.PDA_ADDRESS);
+            // cachedMemos remains empty []
+        }
+        else if (cachedRaw) {
             try {
                 cachedMemos = JSON.parse(cachedRaw);
                 if (Array.isArray(cachedMemos)) {
@@ -701,134 +709,119 @@ const WalletManager = {
     }
 };
 
-// ========= Memo Sender =========
+// ========= Memo Sender (Jupiter V6) =========
 const MemoSender = {
     CFG: {
-        POT: 'EQ3W43KtTw6mMW8ojYQSEPCdYUw8GUqRdBRui8mi4H7A',
+        POT: '9QCZdmZv8nY1iiiaQmzxsuuGXj4gTzH6JiBcTvqdeDB8',
         MEMO: 'Memo1UhkJRfHyvLMcVucJwxXeuD728EqVDDwQDxFMNo',
         MAX: 560,
-        BURN_TOKEN: 'F71QTievhZiRQn2qCX9XznhnoZDPovbnY7eW84bNpump',
+        BURN_TOKEN: '6z1HBtCLTJrzHYXH8AN8dY5sgT4C35k4YsaFiq79BAGS',
+        SOL_MINT: 'So11111111111111111111111111111111111111112',
         TOKEN_PROGRAM: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
         TOKEN_2022_PROGRAM: 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
         ATA_PROGRAM: 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
-        PUMP_PROGRAM: '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',
-        SITE_PDA: 'JB2bfszU6Xfxy8YiUTbr5sNjmBSGnHcaiUUZDjZ8dsxn'
+        JUP_KEY: '18d859ae-199c-4341-b7cc-787cecf3244c',
+        SITE_PDA: 'HQvMbrAMGjMkcobUV56MN9zaryPo9NarLddrEfc1wmLP',
+        CORS_PROXY: 'https://corsproxy.io/?',
+        RPCS: [
+            'https://solana.drpc.org',             // Best for CORS
+            'https://solana-api.projectserum.com', // Good backup
+            'https://rpc.ankr.com/solana',         // Backup
+            'https://api.mainnet-beta.solana.com', // Official (Often fails CORS)
+        ]
     },
-    FEE_LAMPORTS: 5000000,
-    FEE_USD: 3,
+    FEE_LAMPORTS: 5000000, // 0.005 SOL
+    FEE_USD: 3, // Approx visual guide
     cachedSolPrice: null,
     lastPriceFetch: 0,
-    cachedCurveData: null,
-    lastCurveFetch: 0,
 
     init() {
-        // Fire-and-forget price fetch on load
-        this.getSolPrice().catch(e => console.warn('Background price fetch failed', e));
+        this.getSolPrice().catch(() => { });
+        this.updateFeeDisplay(); // Initial set
     },
 
     async preFetch() {
-        try {
-            // Warm up SOL price
-            this.getSolPrice().catch(() => { });
-            // Warm up RPC route (Sticky logic inside rpcWithProxyChain)
-            this.rpc('getLatestBlockhash', [{ commitment: 'confirmed' }]).catch(() => { });
-            // Warm up bonding curve data
-            if (solanaWeb3 && this.CFG && this.CFG.BURN_TOKEN) {
-                const mint = new solanaWeb3.PublicKey(this.CFG.BURN_TOKEN);
-                const curve = this.getBondingCurvePDA(mint);
-                this.getBondingCurveData(curve).catch(() => { });
-            }
-            console.log("MEMO: Pre-fetch started in background.");
-        } catch (e) {
-            console.warn("MEMO: Pre-fetch setup failed:", e);
+        // Warm up price and RPC
+        this.getSolPrice().catch(() => { });
+        this.rpc('getLatestBlockhash', [{ commitment: 'confirmed' }]).catch(() => { });
+    },
+
+    // --- Demo RPC Implementation (Direct First -> Proxy) ---
+    async rpc(method, params) {
+        const body = JSON.stringify({ jsonrpc: '2.0', id: 1, method, params });
+
+        // Strategy 1: Try ALL direct endpoints first
+        for (let i = 0; i < this.CFG.RPCS.length; i++) {
+            const ep = this.CFG.RPCS[i];
+            const result = await this.tryRpcCall(ep, body, method, i);
+            if (result !== null) return result;
         }
+
+        // Strategy 2: If all direct failed, try via CORS Proxy (LAST OPTION)
+        console.warn('All direct RPCs failed, trying CORS proxy...');
+        for (let i = 0; i < this.CFG.RPCS.length; i++) {
+            const ep = this.CFG.RPCS[i];
+            const proxiedUrl = this.CFG.CORS_PROXY + encodeURIComponent(ep);
+            const result = await this.tryRpcCall(proxiedUrl, body, method, i);
+            if (result !== null) return result;
+        }
+
+        throw new Error('RPC failed');
+    },
+
+    async tryRpcCall(url, body, method, endpointIndex) {
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 10000);
+            const r = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body,
+                signal: controller.signal
+            });
+            clearTimeout(timeout);
+
+            if (r.ok) {
+                const d = await r.json();
+                if (d.result !== undefined) {
+                    return d.result;
+                }
+            }
+        } catch (e) {
+            // Silent fail - try next endpoint
+        }
+        return null;
     },
 
     async getSolPrice() {
         const now = Date.now();
-        // Use cache if fresh (< 5 mins)
-        if (this.cachedSolPrice && (now - this.lastPriceFetch < 300000)) {
-            return this.cachedSolPrice;
-        }
+        if (this.cachedSolPrice && (now - this.lastPriceFetch < 300000)) return this.cachedSolPrice;
 
-        const priceUrl = 'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd';
-        const phpProxy = (typeof PHP_PROXY !== 'undefined') ? PHP_PROXY : 'proxy.php?url=';
-        const thirdPartyProxies = (typeof PROXY_SERVICES !== 'undefined') ? PROXY_SERVICES : [
-            { url: 'https://api.codetabs.com/v1/proxy?quest=', name: 'codetabs' },
-            { url: 'https://api.allorigins.win/raw?url=', name: 'allorigins' },
-            { url: 'https://corsproxy.io/?', name: 'corsproxyio' }
-        ];
-
-        // 1) PHP proxy
         try {
-            const r = await fetch(phpProxy + encodeURIComponent(priceUrl));
+            const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
             if (r.ok) {
                 const data = await r.json();
                 if (data?.solana?.usd) {
-                    log('SOL: Price via BACKEND');
                     this.cachedSolPrice = data.solana.usd;
-                    this.lastPriceFetch = Date.now();
+                    this.lastPriceFetch = now;
                     return data.solana.usd;
                 }
             }
-        } catch (e) {
-            console.warn('Price fetch via PHP proxy failed:', e.message);
-        }
-
-        // 2) Third-party proxies
-        for (const proxy of thirdPartyProxies) {
-            try {
-                const r = await fetch(proxy.url + encodeURIComponent(priceUrl));
-                if (r.ok) {
-                    const data = await r.json();
-                    if (data?.solana?.usd) {
-                        log(`SOL: Price via ${proxy.name.toUpperCase()} `);
-                        this.cachedSolPrice = data.solana.usd;
-                        this.lastPriceFetch = Date.now();
-                        return data.solana.usd;
-                    }
-                }
-            } catch (e) {
-                console.warn(`Price fetch via ${proxy.name} failed: `, e.message);
-            }
-        }
-
-        // 3) Direct
-        try {
-            const r = await fetch(priceUrl);
-            if (r.ok) {
-                const data = await r.json();
-                if (data?.solana?.usd) {
-                    log('SOL: Price via DIRECT');
-                    this.cachedSolPrice = data.solana.usd;
-                    this.lastPriceFetch = Date.now();
-                    return data.solana.usd;
-                }
-            }
-        } catch (e) {
-            console.warn('Direct price fetch failed:', e.message);
-        }
-
-        return null;
+        } catch (e) { }
+        return 0; // Fallback
     },
 
+    updateFeeDisplay() {
+        // Optional helper if we want to update UI somewhere, can be expanded
+    },
+
+    // --- Helpers ---
     getSitePDA() {
         const [pda] = solanaWeb3.PublicKey.findProgramAddressSync(
-            [new TextEncoder().encode('geoint')],
+            [new TextEncoder().encode('geoint.world')],
             new solanaWeb3.PublicKey(this.CFG.MEMO)
         );
         return pda;
-    },
-
-    async rpc(method, params) {
-        return rpcWithProxyChain(method, params);
-    },
-
-    base64ToUint8Array(base64) {
-        const binary = atob(base64);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-        return bytes;
     },
 
     getATAAddress(owner, mint, useToken2022 = false) {
@@ -840,134 +833,15 @@ const MemoSender = {
         return ata;
     },
 
-    getBondingCurvePDA(mint) {
-        const [pda] = solanaWeb3.PublicKey.findProgramAddressSync(
-            [new TextEncoder().encode('bonding-curve'), mint.toBuffer()],
-            new solanaWeb3.PublicKey(this.CFG.PUMP_PROGRAM)
-        );
-        return pda;
-    },
-
-    async getBondingCurveData(bondingCurve) {
-        const now = Date.now();
-        const addr = bondingCurve.toString();
-
-        // Cache for 60 seconds (curve data changes with every trade, but ~instant preference)
-        if (this.cachedCurveData && this.cachedCurveData.addr === addr && (now - this.lastCurveFetch < 60000)) {
-            return this.cachedCurveData.data;
-        }
-
-        try {
-            const info = await this.rpc('getAccountInfo', [addr, { encoding: 'base64' }]);
-            if (!info?.value?.data) return null;
-            const data = this.base64ToUint8Array(info.value.data[0]);
-            const view = new DataView(data.buffer);
-            const curveData = {
-                virtualTokenReserves: view.getBigUint64(8, true),
-                virtualSolReserves: view.getBigUint64(16, true),
-                complete: data[48] === 1
-            };
-
-            this.cachedCurveData = { addr, data: curveData };
-            this.lastCurveFetch = now;
-
-            return curveData;
-        } catch (e) {
-            console.error('getBondingCurveData error:', e);
-            throw e;
-        }
-    },
-
-    calculateTokensOut(solAmount, curveData) {
-        const solIn = BigInt(solAmount);
-        const virtualSol = curveData.virtualSolReserves;
-        const virtualToken = curveData.virtualTokenReserves;
-        const tokensOut = (solIn * virtualToken) / (virtualSol + solIn);
-        return tokensOut * BigInt(90) / BigInt(100);
-    },
-
-    async getPumpPortalTransaction(userPubkey, mintAddress, solAmount) {
-        const pumpUrl = 'https://pumpportal.fun/api/trade-local';
-        const phpProxy = (typeof PHP_PROXY !== 'undefined') ? PHP_PROXY : 'proxy.php?url=';
-        const thirdPartyProxies = (typeof PROXY_SERVICES !== 'undefined') ? PROXY_SERVICES : [
-            { url: 'https://api.codetabs.com/v1/proxy?quest=', name: 'codetabs' },
-            { url: 'https://api.allorigins.win/raw?url=', name: 'allorigins' },
-            { url: 'https://corsproxy.io/?', name: 'corsproxyio' }
-        ];
-        const postBody = JSON.stringify({
-            publicKey: userPubkey.toString(),
-            action: 'buy',
-            mint: mintAddress,
-            denominatedInSol: 'true',
-            amount: solAmount,
-            slippage: 10,
-            priorityFee: 0.0005,
-            pool: 'pump'
-        });
-        const fetchOpts = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: postBody
-        };
-
-        // 1) PHP proxy
-        try {
-            const proxiedUrl = phpProxy + encodeURIComponent(pumpUrl);
-            console.log('PumpPortal: Trying PHP proxy');
-            const response = await fetch(proxiedUrl, fetchOpts);
-            if (response.ok) {
-                const data = await response.arrayBuffer();
-                if (data.byteLength > 0) {
-                    log('SOL: PumpPortal via BACKEND');
-                    return solanaWeb3.VersionedTransaction.deserialize(new Uint8Array(data));
-                }
-            }
-        } catch (e) {
-            console.warn('PumpPortal: PHP proxy failed:', e.message);
-        }
-
-        // 2) Third-party proxies
-        for (const proxy of thirdPartyProxies) {
-            try {
-                const proxiedUrl = proxy.url + encodeURIComponent(pumpUrl);
-                console.log(`PumpPortal: Trying ${proxy.name} `);
-                const response = await fetch(proxiedUrl, fetchOpts);
-                if (response.ok) {
-                    const data = await response.arrayBuffer();
-                    if (data.byteLength > 0) {
-                        log(`SOL: PumpPortal via ${proxy.name.toUpperCase()} `);
-                        return solanaWeb3.VersionedTransaction.deserialize(new Uint8Array(data));
-                    }
-                }
-            } catch (e) {
-                console.warn(`PumpPortal: ${proxy.name} failed: `, e.message);
-            }
-        }
-
-        // 3) Direct
-        try {
-            console.log('PumpPortal: Trying direct');
-            const response = await fetch(pumpUrl, fetchOpts);
-            if (response.ok) {
-                const data = await response.arrayBuffer();
-                log('SOL: PumpPortal via DIRECT');
-                return solanaWeb3.VersionedTransaction.deserialize(new Uint8Array(data));
-            } else {
-                const errorText = await response.text();
-                throw new Error(`PumpPortal API error: ${response.status} - ${errorText} `);
-            }
-        } catch (e) {
-            console.warn('PumpPortal: Direct failed:', e.message);
-            throw new Error(`All PumpPortal methods failed: ${e.message} `);
-        }
-    },
-
     async getTokenBalance(tokenAccount) {
         const addr = tokenAccount.toString();
+        // Method 1: RPC
         try {
             const info = await this.rpc('getTokenAccountBalance', [addr]);
             if (info?.value?.amount) return BigInt(info.value.amount);
-        } catch { }
+        } catch (e) { }
+
+        // Method 2: Manual Parse
         try {
             const acctInfo = await this.rpc('getAccountInfo', [addr, { encoding: 'base64' }]);
             if (acctInfo?.value?.data) {
@@ -978,16 +852,16 @@ const MemoSender = {
                     return amount;
                 }
             }
-        } catch { }
+        } catch (e) { }
         return BigInt(0);
     },
 
     createBurnInstruction(tokenAccount, mint, owner, amount, decimals, useToken2022 = false) {
-        const data = new Uint8Array(10);
-        data[0] = 15;
+        const data = new Uint8Array(9);
+        data[0] = 8; // Burn (Opcode 8)
         const amountBigInt = BigInt(amount);
         for (let i = 0; i < 8; i++) data[1 + i] = Number((amountBigInt >> BigInt(i * 8)) & BigInt(0xff));
-        data[9] = decimals;
+
         const tokenProgram = useToken2022 ? this.CFG.TOKEN_2022_PROGRAM : this.CFG.TOKEN_PROGRAM;
         return new solanaWeb3.TransactionInstruction({
             programId: new solanaWeb3.PublicKey(tokenProgram),
@@ -1000,9 +874,45 @@ const MemoSender = {
         });
     },
 
-    async waitForConfirmation(sig, maxAttempts = 120) { // Increased attempts, decreased interval
+    // --- Jupiter API ---
+    async getJupiterQuote(inputMint, outputMint, amount, slippageBps = 200) {
+        try {
+            const url = `https://api.jup.ag/swap/v1/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amount}&slippageBps=${slippageBps}`;
+            const r = await fetch(url, { headers: { 'x-api-key': this.CFG.JUP_KEY } });
+            if (r.ok) return await r.json();
+            throw new Error('Jupiter Quote API failed');
+        } catch (e) {
+            console.error('JUP: Quote error:', e);
+            throw e;
+        }
+    },
+
+    async getJupiterSwapTransaction(quoteResponse, userPubkey) {
+        try {
+            const body = JSON.stringify({
+                quoteResponse,
+                userPublicKey: userPubkey.toString(),
+                wrapAndUnwrapSol: true
+            });
+            const r = await fetch('https://api.jup.ag/swap/v1/swap', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-api-key': this.CFG.JUP_KEY },
+                body
+            });
+            if (r.ok) {
+                const data = await r.json();
+                return data.swapTransaction;
+            }
+            throw new Error('Jupiter Swap API failed: ' + await r.text());
+        } catch (e) {
+            console.error('JUP: Swap error:', e);
+            throw e;
+        }
+    },
+
+    async waitForConfirmation(sig, maxAttempts = 15) {
         for (let i = 0; i < maxAttempts; i++) {
-            await new Promise(r => setTimeout(r, 500)); // Sleep 0.5s instead of 3s
+            await new Promise(r => setTimeout(r, 2000));
             try {
                 const result = await this.rpc('getSignatureStatuses', [[sig], { searchTransactionHistory: true }]);
                 const s = result?.value?.[0];
@@ -1016,6 +926,7 @@ const MemoSender = {
     },
 
     formatEntityData(props, layer, coords) {
+        // Legacy formatter kept for compatibility
         const ts = new Date().toISOString();
         let data = { type: layer, time: ts };
         if (layer === 'flights') data = { ...data, callsign: props.callsign, icao: props.icao, alt: props.altitude || props.altitudeRaw, spd: props.velocity || props.velocityRaw, cat: props.category };
@@ -1032,149 +943,151 @@ const MemoSender = {
         return JSON.stringify(data).substring(0, 500);
     },
 
+    // --- Main Send Function ---
     async send(props, layer, coords) {
         let toast = null;
-        // Auto-Repair: Check if we are actually connected via global scope
+
+        // Wallet Check
         if (!WalletManager.wallet || !WalletManager.pubkey) {
             const provider = window.phantom?.solana || window.solana;
             if (provider && (provider.isConnected || provider.publicKey)) {
-                console.log('MEMO: Auto-repairing wallet connection...');
                 WalletManager.wallet = provider;
                 WalletManager.pubkey = provider.publicKey;
-                // Update UI to match
-                if (document.getElementById('w-status')) {
-                    document.getElementById('w-status').textContent = 'CONNECTED';
-                    document.getElementById('w-status').style.color = '#00ff00';
-                }
+            } else {
+                Toast.show('warn', 'WALLET NOT CONNECTED', 3000);
+                const wBtn = document.getElementById('wallet-btn');
+                if (wBtn) wBtn.click();
+                return false;
             }
         }
 
         const wallet = WalletManager.wallet;
         const pubkey = WalletManager.pubkey;
-
-        console.log('MEMO: Checking wallet state for upload...', { wallet, pubkey });
-
-        if (!wallet || !pubkey) {
-            Toast.show('warn', 'WALLET NOT CONNECTED - Opening wallet modal...', 3000);
-            log('MEMO: Wallet not connected. Opening wallet...');
-
-            // Try to open the modal programmatically
-            const wBtn = document.getElementById('wallet-btn'); // Map icon
-            if (wBtn) wBtn.click();
-
-            return false;
-        }
         const memo = this.formatEntityData(props, layer, coords);
-        const layerName = layer.replace(/-/g, ' ').toUpperCase();
-        const pot = this.CFG.POT;
 
-        // Fetch SOL price and calculate $3 USD worth of SOL
-        let solPrice = this.cachedSolPrice;
-
-        if (!solPrice) {
-            toast = Toast.show('info', 'FETCHING CURRENT SOL PRICE...');
-            solPrice = await this.getSolPrice();
-        } else {
-            console.log('MEMO: Using cached price:', solPrice);
-        }
-
-        let feeLam;
-        let feeDisplay;
+        // Fee Calculation
+        let solPrice = this.cachedSolPrice || await this.getSolPrice();
+        let feeLam = this.FEE_LAMPORTS;
+        let feeDisplay = `${(feeLam / 1e9).toFixed(4)} SOL`;
         if (solPrice) {
-            feeLam = Math.floor((this.FEE_USD / solPrice) * 1e9);
-            const feeSol = feeLam / 1e9;
-            feeDisplay = `${feeSol.toFixed(4)} SOL(~$${this.FEE_USD})`;
-        } else {
-            // Fallback to hardcoded value if price fetch fails
-            feeLam = this.FEE_LAMPORTS;
-            feeDisplay = `${(feeLam / 1e9).toFixed(4)} SOL`;
+            // Optional: dynamic fee adjustment based on USD? 
+            // Demo uses static selectable value, defaulting to 0.005. We use that default.
+            feeDisplay += ` (~$${(feeLam / 1e9 * solPrice).toFixed(2)})`;
         }
 
-        if (!toast) {
-            toast = Toast.show('info', `INITIATING UPLOAD (Fee: ~$${this.FEE_USD})...`);
-        } else {
-            Toast.update(toast, 'info', `INITIATING UPLOAD (Fee: ~$${this.FEE_USD})...`);
-        }
-        log(`MEMO: Preparing to send ${layer} data with ${feeDisplay} fee...`);
+        toast = Toast.show('info', `INITIATING JUPITER INSCRIPTION...`);
+        log(`MEMO: Starting Jupiter Flow. Fee: ${feeDisplay}`);
+
         try {
+            // 0. Prep
             const bh = await this.rpc('getLatestBlockhash', [{ commitment: 'confirmed' }]);
             if (!bh?.value?.blockhash) throw new Error('Failed to get blockhash');
+
+            // Split Fee
             const directLam = Math.floor(feeLam * 0.1);
             const swapLam = feeLam - directLam;
-            const swapSol = swapLam / 1e9;
 
             const burnTokenMint = new solanaWeb3.PublicKey(this.CFG.BURN_TOKEN);
-            const bondingCurve = this.getBondingCurvePDA(burnTokenMint);
-            const userATA = this.getATAAddress(pubkey, burnTokenMint, true);
+            const ata2022 = this.getATAAddress(pubkey, burnTokenMint, true);
+            const ataLegacy = this.getATAAddress(pubkey, burnTokenMint, false);
 
-            Toast.update(toast, 'info', 'CHECKING TOKEN STATUS...');
-            log('MEMO: Checking token bonding curve status...');
-            const curveData = await this.getBondingCurveData(bondingCurve);
-            if (!curveData) throw new Error('Could not fetch bonding curve data. Token may not exist on pump.fun.');
+            // 1. Snapshot Balances
+            const [initial2022, initialLegacy] = await Promise.all([
+                this.getTokenBalance(ata2022),
+                this.getTokenBalance(ataLegacy)
+            ]);
+            const initialTotal = initial2022 > BigInt(0) ? initial2022 : initialLegacy;
+            log(`MEMO: Init Balances: 2022=${initial2022}, Legacy=${initialLegacy}`);
 
-            const estimatedTokens = this.calculateTokensOut(swapLam, curveData);
-            const estTokensDisplay = Number(estimatedTokens) / 1e6;
-            const balanceBefore = await this.getTokenBalance(userATA);
+            // 2. TX1: Jupiter Swap
+            Toast.update(toast, 'info', 'TX 1/2: FETCHING JUPITER QUOTE...');
+            const quote = await this.getJupiterQuote(this.CFG.SOL_MINT, this.CFG.BURN_TOKEN, swapLam, 200);
 
-            Toast.update(toast, 'info', `TX 1 / 2: BUYING ~${estTokensDisplay.toFixed(0)} TOKENS...`);
-            log(`MEMO: TX1 - Buying tokens with ${swapSol} SOL...`);
-            const buyTx = await this.getPumpPortalTransaction(pubkey, this.CFG.BURN_TOKEN, swapSol);
-            Toast.update(toast, 'info', 'TX 1/2: APPROVE BUY IN WALLET...');
-            const sig1 = (await wallet.signAndSendTransaction(buyTx))?.signature || (await wallet.signAndSendTransaction(buyTx));
-            Toast.update(toast, 'info', `TX1 SENT! WAITING FOR CONFIRMATION...`);
-            log(`MEMO: TX1 sent: ${sig1.slice(0, 8)}... waiting...`);
+            Toast.update(toast, 'info', 'TX 1/2: SWAPPING SOL FOR TOKENS...');
+            const swapTxBase64 = await this.getJupiterSwapTransaction(quote, pubkey);
+            const swapTxBuf = Uint8Array.from(atob(swapTxBase64), c => c.charCodeAt(0));
+            const swapTx = solanaWeb3.VersionedTransaction.deserialize(swapTxBuf);
+
+            const sig1 = (await wallet.signAndSendTransaction(swapTx))?.signature || (await wallet.signAndSendTransaction(swapTx));
+            Toast.update(toast, 'info', 'TX 1 SENT! CONFIRMING SWAP...');
+            log(`MEMO: TX1 (Swap): ${sig1}`);
+
             await this.waitForConfirmation(sig1, 15);
+            await new Promise(r => setTimeout(r, 2000)); // Propagate
 
-            Toast.update(toast, 'info', 'TX 2/2: PREPARING MEMO + BURN...');
-            log('MEMO: TX2 - Preparing transfer + memo + burn...');
-            let balanceAfter = BigInt(0);
-            for (let retry = 0; retry < 40; retry++) { // More retries, smaller interval
-                balanceAfter = await this.getTokenBalance(userATA);
-                if (balanceAfter > balanceBefore) break;
-                await new Promise(r => setTimeout(r, 500)); // 0.5s sleep
+            // 3. Find Tokens
+            Toast.update(toast, 'info', 'TX 2/2: CHECKING TOKENS...');
+            let balance2022 = BigInt(0), balanceLegacy = BigInt(0);
+            let foundNewTokens = false;
+            let use2022 = true;
+            let finalAmount = BigInt(0);
+
+            for (let i = 0; i < 15; i++) {
+                const [b22, bLeg] = await Promise.all([this.getTokenBalance(ata2022), this.getTokenBalance(ataLegacy)]);
+                balance2022 = b22; balanceLegacy = bLeg;
+
+                if (balance2022 > initial2022) { foundNewTokens = true; use2022 = true; finalAmount = balance2022 - initial2022; break; }
+                if (balanceLegacy > initialLegacy) { foundNewTokens = true; use2022 = false; finalAmount = balanceLegacy - initialLegacy; break; }
+
+                await new Promise(r => setTimeout(r, 1500));
             }
-            const tokensToBurn = balanceAfter - balanceBefore;
-            if (tokensToBurn <= BigInt(0)) {
-                Toast.update(toast, 'error', 'NO TOKENS RECEIVED - CHECK TX1', 5000);
-                log(`MEMO ERR: No tokens received from TX1`);
-                return false;
+
+            if (!foundNewTokens) {
+                // Edge case: started with 0?
+                if (initialTotal === BigInt(0)) {
+                    if (balance2022 > BigInt(0)) { foundNewTokens = true; use2022 = true; finalAmount = balance2022; }
+                    else if (balanceLegacy > BigInt(0)) { foundNewTokens = true; use2022 = false; finalAmount = balanceLegacy; }
+                }
             }
+
+            if (!foundNewTokens || finalAmount <= BigInt(0)) {
+                throw new Error('Swap confirmed but tokens not found in wallet.');
+            }
+
+            const tokensToBurn = finalAmount;
+            const userATA = use2022 ? ata2022 : ataLegacy;
             const burnDisplay = Number(tokensToBurn) / 1e6;
+
+            // 4. TX2: Transfer + Memo + Burn
             Toast.update(toast, 'info', `FOUND ${burnDisplay.toFixed(0)} TOKENS! BUILDING TX2...`);
+
             const bh2 = await this.rpc('getLatestBlockhash', [{ commitment: 'confirmed' }]);
             const tx2 = new solanaWeb3.Transaction({ recentBlockhash: bh2.value.blockhash, feePayer: pubkey });
             tx2.add(solanaWeb3.ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 50000 }));
-            tx2.add(solanaWeb3.ComputeBudgetProgram.setComputeUnitLimit({ units: 150000 }));
-            tx2.add(solanaWeb3.SystemProgram.transfer({ fromPubkey: pubkey, toPubkey: new solanaWeb3.PublicKey(pot), lamports: directLam }));
+
+            // Transfer 10%
+            if (directLam > 0) {
+                tx2.add(solanaWeb3.SystemProgram.transfer({
+                    fromPubkey: pubkey,
+                    toPubkey: new solanaWeb3.PublicKey(this.CFG.POT),
+                    lamports: directLam
+                }));
+            }
+
+            // Memo (Site PDA)
             tx2.add(new solanaWeb3.TransactionInstruction({
-                keys: [{ pubkey, isSigner: true, isWritable: false }, { pubkey: this.getSitePDA(), isSigner: false, isWritable: true }],
+                keys: [{ pubkey, isSigner: true, isWritable: false }, { pubkey: this.getSitePDA(), isSigner: false, isWritable: false }],
                 programId: new solanaWeb3.PublicKey(this.CFG.MEMO),
                 data: new TextEncoder().encode(memo)
             }));
-            tx2.add(this.createBurnInstruction(userATA, burnTokenMint, pubkey, tokensToBurn, 6, true));
-            Toast.update(toast, 'info', 'TX 2/2: APPROVE MEMO+BURN IN WALLET...');
+
+            // Burn
+            tx2.add(this.createBurnInstruction(userATA, burnTokenMint, pubkey, tokensToBurn, 6, use2022));
+
+            Toast.update(toast, 'info', 'TX 2/2: APPROVE MEMO + BURN...');
             const sig2 = (await wallet.signAndSendTransaction(tx2))?.signature || (await wallet.signAndSendTransaction(tx2));
-            Toast.update(toast, 'info', 'TX2 SENT! CONFIRMING...');
-            log(`MEMO: TX2 sent: ${sig2.slice(0, 8)}... confirming...`);
+
+            Toast.update(toast, 'info', 'TX 2 SENT! FINALIZING...');
+            log(`MEMO: TX2 (Burn): ${sig2}`);
             await this.waitForConfirmation(sig2, 10);
-            const burnedAmount = Number(tokensToBurn) / 1e6;
-            const shortSig2 = sig2.slice(0, 6) + '...' + sig2.slice(-4);
-            Toast.update(toast, 'success', `DONE! ${burnedAmount.toFixed(0)} TOKENS BURNED! TX: ${shortSig2} `, 6000);
-            log(`MEMO: Success! ${burnedAmount.toFixed(0)} tokens burned.TX1: ${sig1.slice(0, 8)}...TX2: ${sig2.slice(0, 8)}...`);
+
+            Toast.update(toast, 'success', `SUCCESS! ${burnDisplay.toFixed(0)} TOKENS BURNED!`, 5000);
+            log(`MEMO: Inscription Complete. Burned: ${burnDisplay}`);
             return sig2;
+
         } catch (e) {
-            console.error('MEMO: Send error:', e);
-            const errMsg = e.message || 'Unknown error';
-            if (errMsg.includes('User rejected') || errMsg.includes('rejected') || errMsg.includes('cancelled')) {
-                Toast.update(toast, 'error', 'TRANSACTION CANCELLED BY USER', 4000);
-                log('MEMO: Transaction cancelled by user.');
-            } else if (errMsg.includes('insufficient')) {
-                Toast.update(toast, 'error', 'INSUFFICIENT SOL BALANCE (NEED ~0.006 SOL)', 4000);
-                log('MEMO: Insufficient SOL balance.');
-            } else {
-                Toast.update(toast, 'error', `ERROR: ${errMsg.substring(0, 50)} `, 5000);
-                log(`MEMO ERR: ${errMsg} `);
-            }
+            console.error('MEMO: Error', e);
+            if (toast) Toast.update(toast, 'error', `FAILED: ${e.message.substring(0, 40)}`, 4000);
             return false;
         }
     }

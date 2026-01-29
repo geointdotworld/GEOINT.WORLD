@@ -70,16 +70,23 @@ window.addEventListener('resize', throttledMaxHeight);
 let liveFeedModulePromise;
 async function loadLiveFeedModule() {
     if (!liveFeedModulePromise) {
-        liveFeedModulePromise = import('./livefeed.js?v=120').then(module => {
+        liveFeedModulePromise = import('./livefeed.js?v=140').then(module => {
+            // Fallback to window globals if module exports are missing (script-style load)
+            const MemoSender = module.MemoSender || window.MemoSender;
+            const MemoFeed = module.MemoFeed || window.MemoFeed;
+            const WalletManager = module.WalletManager || window.WalletManager;
+
             // Auto-init MemoSender to pre-fetch prices
-            if (module.MemoSender && typeof module.MemoSender.init === 'function') {
-                module.MemoSender.init();
+            if (MemoSender && typeof MemoSender.init === 'function') {
+                MemoSender.init();
             }
             // Auto-initialize Live Feed to pre-fetch data
-            if (module.MemoFeed && typeof module.MemoFeed.init === 'function') {
-                module.MemoFeed.init();
+            if (MemoFeed && typeof MemoFeed.init === 'function') {
+                MemoFeed.init();
             }
-            return module;
+
+            // Return an object structure compatible with destructuring upstream
+            return { MemoSender, MemoFeed, WalletManager, ...module };
         });
     }
     return liveFeedModulePromise;
@@ -103,8 +110,8 @@ function loadScript(src) {
 let meshScriptsPromise;
 function ensureMeshScripts() {
     if (meshScriptsPromise) return meshScriptsPromise;
-    meshScriptsPromise = loadScript('js/repeaters.js?v=120')
-        .then(() => loadScript('js/mesh.js?v=120'))
+    meshScriptsPromise = loadScript('js/repeaters.js?v=140')
+        .then(() => loadScript('js/mesh.js?v=140'))
         .catch(err => { logSystem?.(`ERR: Mesh/Repeater scripts failed - ${err.message}`); throw err; });
     return meshScriptsPromise;
 }

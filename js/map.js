@@ -73,7 +73,7 @@ const createTrackedPopup = (html, coords, layer, props, opts = {}) => {
                 e.stopPropagation();
 
                 try {
-                    const { MemoSender } = await import('./livefeed.js?v=120');
+                    const { MemoSender } = await import('./livefeed.js?v=140');
                     const WalletManager = window.WalletManager;
 
                     // Logic: If wallet is connected, show confirmation. 

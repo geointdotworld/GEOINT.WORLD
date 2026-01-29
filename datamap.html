@@ -14,7 +14,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/satellite.js/5.0.0/satellite.min.js" defer></script>
     <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js" defer></script>
     <link href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css" rel="stylesheet" />
-    <link rel="stylesheet" href="css/style.css?v=120">
+    <link rel="stylesheet" href="css/style.css?v=140">
     <script>
         window.onerror = function (msg, url, lineNo, columnNo, error) {
             const message = `[GLOBAL ERROR] ${msg} at ${url}:${lineNo}:${columnNo}`;
@@ -385,7 +385,7 @@
                         <div class="control-section">
                             <div class="control-row">
                                 <label class="toggle-container">
-                                    <input type="checkbox" id="gdelt-toggle" checked>
+                                    <input type="checkbox" id="gdelt-toggle">
                                     <span class="checkmark"></span>
                                     <span class="toggle-label">NEWS FEED</span>
                                 </label>
@@ -394,7 +394,7 @@
                         <div class="control-section">
                             <div class="control-row">
                                 <label class="toggle-container">
-                                    <input type="checkbox" id="polymarket-toggle" checked>
+                                    <input type="checkbox" id="polymarket-toggle">
                                     <span class="checkmark"></span>
                                     <span class="toggle-label">PREDICTION FEED</span>
                                 </label>
@@ -660,6 +660,13 @@
                     <li>USGS (Earthquakes)</li>
                     <li>OpenFreeMap (Base Map)</li>
                 </ul>
+                <p><strong>GUIDES & DOCUMENTATION:</strong></p>
+                <div class="info-docs-grid">
+                    <a href="docs/introduction/index.html" class="intel-btn">[ INTRODUCTION ]</a>
+                    <a href="docs/getting-started/index.html" class="intel-btn">[ GETTING STARTED ]</a>
+                    <a href="docs/inscriptions/index.html" class="intel-btn">[ INSCRIPTIONS GUIDE ]</a>
+                    <a href="docs/index.html" class="intel-btn">[ FULL DOCUMENTATION ]</a>
+                </div>
                 <br>
                 <p><a href="legal.html?from=datamap" class="legal-link">[ LEGAL / PRIVACY POLICY ]</a></p>
             </div>
@@ -1541,20 +1548,20 @@
     <div id="map"></div>
 
     <!-- JS Modules -->
-    <script src="js/inscriptions.js"></script>
-    <script src="js/livefeed.js"></script>
-    <script src="js/utils.js?v=120"></script>
-    <script src="js/globals.js?v=120" defer></script>
-    <script src="js/flights.js?v=120" defer></script>
-    <script src="js/space.js?v=120" defer></script>
-    <script src="js/ships.js?v=120" defer></script>
-    <script src="js/radio.js?v=120" defer></script>
-    <script src="js/cables.js?v=120" defer></script>
-    <script src="js/map.js?v=120" defer></script>
-    <script src="js/ui.js?v=120" defer></script>
-    <script src="js/news.js?v=120" defer></script>
-    <script src="js/polymarket.js?v=120" defer></script>
-    <script src="js/earthquakes.js?v=120" defer></script>
+    <script src="js/inscriptions.js?v=140"></script>
+    <script src="js/livefeed.js?v=140"></script>
+    <script src="js/utils.js?v=140"></script>
+    <script src="js/globals.js?v=140" defer></script>
+    <script src="js/flights.js?v=140" defer></script>
+    <script src="js/space.js?v=140" defer></script>
+    <script src="js/ships.js?v=140" defer></script>
+    <script src="js/radio.js?v=140" defer></script>
+    <script src="js/cables.js?v=140" defer></script>
+    <script src="js/map.js?v=140" defer></script>
+    <script src="js/ui.js?v=140" defer></script>
+    <script src="js/news.js?v=140" defer></script>
+    <script src="js/polymarket.js?v=140" defer></script>
+    <script src="js/earthquakes.js?v=140" defer></script>
 
 </body>
 

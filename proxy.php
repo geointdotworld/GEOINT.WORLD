@@ -61,7 +61,9 @@ $allowedDomains = [
     'api.mainnet-beta.solana.com',
     'rpc.ankr.com',
     'api.coingecko.com',
-    'pumpportal.fun'
+    'pumpportal.fun',
+    'quote-api.jup.ag',
+    'api.jup.ag'
 ];
 
 $parsedUrl = parse_url($targetUrl);
@@ -93,6 +95,11 @@ $headers = [
 // Forward Authorization header if present
 if (isset($_GET['auth'])) {
     $headers[] = 'Authorization: Bearer ' . $_GET['auth'];
+}
+
+// Forward x-api-key header if present (standard header for many APIs)
+if (isset($_SERVER['HTTP_X_API_KEY'])) {
+    $headers[] = 'x-api-key: ' . $_SERVER['HTTP_X_API_KEY'];
 }
 
 curl_setopt_array($ch, [

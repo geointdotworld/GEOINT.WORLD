@@ -1872,7 +1872,7 @@ input[type=range]::-moz-range-track {
 
 .modal-content {
     background-color: rgba(10, 10, 10, 0.95);
-    margin: 15vh auto;
+    margin: 5vh auto;
     padding: 20px;
     border: 1px solid #ff6800;
     width: 90%;
@@ -1981,6 +1981,20 @@ input[type=range]::-moz-range-track {
 .legal-link:hover {
     color: #ffcc66;
     text-decoration: underline;
+}
+
+.info-docs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.info-docs-grid .intel-btn {
+    font-size: 10px;
+    padding: 8px 5px;
+    text-align: center;
+    width: 100%;
 }
 
 .checkmark-small {
