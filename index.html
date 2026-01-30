@@ -14,13 +14,13 @@
     <!-- Preload Application Page and Core Dependencies -->
     <link rel="prerender" href="datamap.html">
     <link rel="prefetch" href="datamap.html">
-    <link rel="stylesheet" href="css/style.css?v=140">
+    <link rel="stylesheet" href="css/style.css?v=151">
     <link rel="prefetch" href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js">
     <link rel="prefetch" href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css">
-    <link rel="prefetch" href="js/utils.js?v=140">
-    <link rel="prefetch" href="js/globals.js?v=140">
-    <link rel="prefetch" href="js/map.js?v=140">
-    <link rel="prefetch" href="js/ui.js?v=140">
+    <link rel="prefetch" href="js/utils.js?v=151">
+    <link rel="prefetch" href="js/globals.js?v=151">
+    <link rel="prefetch" href="js/map.js?v=151">
+    <link rel="prefetch" href="js/ui.js?v=151">
     <link rel="prefetch" href="https://tiles.openfreemap.org/planet">
     <style>
         :root {
@@ -837,9 +837,9 @@
                         'js/ships.js': 'v=130',
                         'js/radio.js': 'v=130',
                         'js/cables.js': 'v=130',
-                        'js/map.js': 'v=130',
-                        'js/ui.js': 'v=130',
-                        'js/news.js': 'v=130'
+                        'js/map.js': 'v=150',
+                        'js/ui.js': 'v=150',
+                        'js/news.js': 'v=150'
                     };
                     const version = cacheBusters[asset] || 'v=1';
                     link.href = asset + '?' + version;
@@ -854,10 +854,10 @@
         setTimeout(typeLoop, 1000);
         prefetchApp(); // Start pre-fetching app assets in background
     </script>
-    <script src="js/utils.js?v=140"></script>
-    <script src="js/globals.js?v=140"></script>
-    <script src="js/news.js?v=140" defer></script>
-    <script src="js/polymarket.js?v=140" defer></script>
+    <script src="js/utils.js?v=150"></script>
+    <script src="js/globals.js?v=150"></script>
+    <script src="js/news.js?v=150" defer></script>
+    <script src="js/polymarket.js?v=150" defer></script>
 </body>
 
 </html>

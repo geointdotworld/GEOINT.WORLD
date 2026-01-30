@@ -2,9 +2,9 @@
 // Depends on globals: solanaWeb3, Toast (window.Toast), logSystem (optional)
 // Uses: PHP_PROXY, PROXY_SERVICES, SOLANA_RPCS from globals.js
 
-const el = id => document.getElementById(id);
+const lfEl = id => document.getElementById(id);
 const log = msg => (window.logSystem ? window.logSystem(msg) : console.log(msg));
-const Toast = window.Toast;
+// const Toast removal: avoiding global conflict with ui.js
 
 // ========= Shared RPC Helper with Proxy Chain =========
 // Priority: 1) Third-party CORS proxies, 2) Direct RPC
@@ -170,7 +170,7 @@ const MemoFeed = {
      * Fetches up to TARGET_SIGNATURES in CHUNK_SIZE batches
      */
     renderMemos(memos) {
-        const list = el('memo-feed-list');
+        const list = lfEl('memo-feed-list');
         list.innerHTML = memos.map(m => `
             <div class="memo-wrapper">
                 <div class="memo-author" style="display: flex; align-items: center; justify-content: space-between;">
@@ -200,7 +200,7 @@ const MemoFeed = {
 
     // NEW: Render a single memo immediately (prepend to feed) with fade-in animation
     renderSingleMemo(memo) {
-        const list = el('memo-feed-list');
+        const list = lfEl('memo-feed-list');
 
         // Remove loader if still showing
         const loader = list.querySelector('.poly-loader-container');
@@ -314,7 +314,7 @@ const MemoFeed = {
             return;
         }
         this.isLoading = true;
-        const list = el('memo-feed-list'), scanning = el('feed-scanning');
+        const list = lfEl('memo-feed-list'), scanning = lfEl('feed-scanning');
         const MAX_MEMOS = 500;
         const MAX_RETRIES = 3;
 
@@ -551,7 +551,7 @@ const MemoFeed = {
             document.head.appendChild(style);
         }
 
-        const refreshBtn = el('feed-refresh-btn');
+        const refreshBtn = lfEl('feed-refresh-btn');
         this.load();
         if (refreshBtn) {
             const newBtn = refreshBtn.cloneNode(true);
@@ -715,7 +715,7 @@ const MemoSender = {
         POT: '9QCZdmZv8nY1iiiaQmzxsuuGXj4gTzH6JiBcTvqdeDB8',
         MEMO: 'Memo1UhkJRfHyvLMcVucJwxXeuD728EqVDDwQDxFMNo',
         MAX: 560,
-        BURN_TOKEN: '6z1HBtCLTJrzHYXH8AN8dY5sgT4C35k4YsaFiq79BAGS',
+        BURN_TOKEN: 'AahajxcefUQy6eYHoJaqUF7SRcSfAsrtcTCjT2PJBAGS',
         SOL_MINT: 'So11111111111111111111111111111111111111112',
         TOKEN_PROGRAM: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
         TOKEN_2022_PROGRAM: 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
@@ -954,7 +954,7 @@ const MemoSender = {
                 WalletManager.wallet = provider;
                 WalletManager.pubkey = provider.publicKey;
             } else {
-                Toast.show('warn', 'WALLET NOT CONNECTED', 3000);
+                window.Toast.show('warn', 'WALLET NOT CONNECTED', 3000);
                 const wBtn = document.getElementById('wallet-btn');
                 if (wBtn) wBtn.click();
                 return false;
@@ -975,7 +975,7 @@ const MemoSender = {
             feeDisplay += ` (~$${(feeLam / 1e9 * solPrice).toFixed(2)})`;
         }
 
-        toast = Toast.show('info', `INITIATING JUPITER INSCRIPTION...`);
+        toast = window.Toast.show('info', `INITIATING JUPITER INSCRIPTION...`);
         log(`MEMO: Starting Jupiter Flow. Fee: ${feeDisplay}`);
 
         try {
@@ -1000,23 +1000,23 @@ const MemoSender = {
             log(`MEMO: Init Balances: 2022=${initial2022}, Legacy=${initialLegacy}`);
 
             // 2. TX1: Jupiter Swap
-            Toast.update(toast, 'info', 'TX 1/2: FETCHING JUPITER QUOTE...');
+            window.Toast.update(toast, 'info', 'TX 1/2: FETCHING JUPITER QUOTE...');
             const quote = await this.getJupiterQuote(this.CFG.SOL_MINT, this.CFG.BURN_TOKEN, swapLam, 200);
 
-            Toast.update(toast, 'info', 'TX 1/2: SWAPPING SOL FOR TOKENS...');
+            window.Toast.update(toast, 'info', 'TX 1/2: SWAPPING SOL FOR TOKENS...');
             const swapTxBase64 = await this.getJupiterSwapTransaction(quote, pubkey);
             const swapTxBuf = Uint8Array.from(atob(swapTxBase64), c => c.charCodeAt(0));
             const swapTx = solanaWeb3.VersionedTransaction.deserialize(swapTxBuf);
 
             const sig1 = (await wallet.signAndSendTransaction(swapTx))?.signature || (await wallet.signAndSendTransaction(swapTx));
-            Toast.update(toast, 'info', 'TX 1 SENT! CONFIRMING SWAP...');
+            window.Toast.update(toast, 'info', 'TX 1 SENT! CONFIRMING SWAP...');
             log(`MEMO: TX1 (Swap): ${sig1}`);
 
             await this.waitForConfirmation(sig1, 15);
             await new Promise(r => setTimeout(r, 2000)); // Propagate
 
             // 3. Find Tokens
-            Toast.update(toast, 'info', 'TX 2/2: CHECKING TOKENS...');
+            window.Toast.update(toast, 'info', 'TX 2/2: CHECKING TOKENS...');
             let balance2022 = BigInt(0), balanceLegacy = BigInt(0);
             let foundNewTokens = false;
             let use2022 = true;
@@ -1049,7 +1049,7 @@ const MemoSender = {
             const burnDisplay = Number(tokensToBurn) / 1e6;
 
             // 4. TX2: Transfer + Memo + Burn
-            Toast.update(toast, 'info', `FOUND ${burnDisplay.toFixed(0)} TOKENS! BUILDING TX2...`);
+            window.Toast.update(toast, 'info', `FOUND ${burnDisplay.toFixed(0)} TOKENS! BUILDING TX2...`);
 
             const bh2 = await this.rpc('getLatestBlockhash', [{ commitment: 'confirmed' }]);
             const tx2 = new solanaWeb3.Transaction({ recentBlockhash: bh2.value.blockhash, feePayer: pubkey });
@@ -1074,20 +1074,20 @@ const MemoSender = {
             // Burn
             tx2.add(this.createBurnInstruction(userATA, burnTokenMint, pubkey, tokensToBurn, 6, use2022));
 
-            Toast.update(toast, 'info', 'TX 2/2: APPROVE MEMO + BURN...');
+            window.Toast.update(toast, 'info', 'TX 2/2: APPROVE MEMO + BURN...');
             const sig2 = (await wallet.signAndSendTransaction(tx2))?.signature || (await wallet.signAndSendTransaction(tx2));
 
-            Toast.update(toast, 'info', 'TX 2 SENT! FINALIZING...');
+            window.Toast.update(toast, 'info', 'TX 2 SENT! FINALIZING...');
             log(`MEMO: TX2 (Burn): ${sig2}`);
             await this.waitForConfirmation(sig2, 10);
 
-            Toast.update(toast, 'success', `SUCCESS! ${burnDisplay.toFixed(0)} TOKENS BURNED!`, 5000);
+            window.Toast.update(toast, 'success', `SUCCESS! ${burnDisplay.toFixed(0)} TOKENS BURNED!`, 5000);
             log(`MEMO: Inscription Complete. Burned: ${burnDisplay}`);
             return sig2;
 
         } catch (e) {
             console.error('MEMO: Error', e);
-            if (toast) Toast.update(toast, 'error', `FAILED: ${e.message.substring(0, 40)}`, 4000);
+            if (toast) window.Toast.update(toast, 'error', `FAILED: ${e.message.substring(0, 40)}`, 4000);
             return false;
         }
     }
@@ -1098,4 +1098,3 @@ window.MemoFeed = MemoFeed;
 window.WalletManager = WalletManager;
 window.MemoSender = MemoSender;
 
-export { MemoFeed, WalletManager, MemoSender };

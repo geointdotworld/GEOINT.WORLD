@@ -28,7 +28,7 @@ let polyMarketToTokens = new Map(); // marketId -> [token1, token2]
 let polyTokenToMarket = new Map(); // token -> marketId
 
 async function initPolymarketSystem() {
-    const isEnabled = localStorage.getItem('polymarket_enabled') === 'true'; // Default false
+    const isEnabled = localStorage.getItem('polymarket_enabled') !== 'false'; // Default true
     polyGroupEnabled = localStorage.getItem('polymarket_group_enabled') !== 'false'; // Default true
 
     const groupToggle = document.getElementById('poly-group-toggle');

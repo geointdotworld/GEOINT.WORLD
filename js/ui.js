@@ -70,7 +70,7 @@ window.addEventListener('resize', throttledMaxHeight);
 let liveFeedModulePromise;
 async function loadLiveFeedModule() {
     if (!liveFeedModulePromise) {
-        liveFeedModulePromise = import('./livefeed.js?v=140').then(module => {
+        liveFeedModulePromise = import('./livefeed.js?v=151').then(module => {
             // Fallback to window globals if module exports are missing (script-style load)
             const MemoSender = module.MemoSender || window.MemoSender;
             const MemoFeed = module.MemoFeed || window.MemoFeed;
@@ -110,8 +110,8 @@ function loadScript(src) {
 let meshScriptsPromise;
 function ensureMeshScripts() {
     if (meshScriptsPromise) return meshScriptsPromise;
-    meshScriptsPromise = loadScript('js/repeaters.js?v=140')
-        .then(() => loadScript('js/mesh.js?v=140'))
+    meshScriptsPromise = loadScript('js/repeaters.js?v=151')
+        .then(() => loadScript('js/mesh.js?v=151'))
         .catch(err => { logSystem?.(`ERR: Mesh/Repeater scripts failed - ${err.message}`); throw err; });
     return meshScriptsPromise;
 }
