@@ -70,7 +70,7 @@ window.addEventListener('resize', throttledMaxHeight);
 let liveFeedModulePromise;
 async function loadLiveFeedModule() {
     if (!liveFeedModulePromise) {
-        liveFeedModulePromise = import('./livefeed.js?v=151').then(module => {
+        liveFeedModulePromise = import('./livefeed.js?v=154').then(module => {
             // Fallback to window globals if module exports are missing (script-style load)
             const MemoSender = module.MemoSender || window.MemoSender;
             const MemoFeed = module.MemoFeed || window.MemoFeed;

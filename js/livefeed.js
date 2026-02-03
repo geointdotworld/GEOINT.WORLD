@@ -7,18 +7,27 @@ const log = msg => (window.logSystem ? window.logSystem(msg) : console.log(msg))
 // const Toast removal: avoiding global conflict with ui.js
 
 // ========= Shared RPC Helper with Proxy Chain =========
-// Priority: 1) Third-party CORS proxies, 2) Direct RPC
+// Priority: 1) PHP Proxy (local, reliable), 2) Third-party CORS proxies, 3) Direct RPC
 const RPC_TIMEOUT = 12000;
-let activeRpcRoute = null; // Cache the working route { type: 'proxy'|'direct', url: string, endpoint: string, proxyName: string }
+let activeRpcRoute = null; // Cache the working route { type: 'php'|'proxy'|'direct', url: string, endpoint: string, proxyName: string }
+
+// PHP Proxy (local - most reliable for localhost)
+const LF_PHP_PROXY = (typeof PHP_PROXY !== 'undefined') ? PHP_PROXY : 'proxy.php?url=';
 
 async function rpcWithProxyChain(method, params) {
     const body = JSON.stringify({ jsonrpc: '2.0', id: 1, method, params });
     const fetchOpts = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body };
 
-    // Config
-    const rpcs = ['https://api.mainnet-beta.solana.com', 'https://rpc.ankr.com/solana'];
+    // Config - Solana RPC endpoints (ordered by reliability for public access)
+    const rpcs = [
+        'https://solana.drpc.org',                   // Good CORS support
+        'https://solana-mainnet.rpc.extrnode.com',   // Free public RPC
+        'https://api.mainnet-beta.solana.com',       // Official (rate limited)
+        'https://rpc.ankr.com/solana',               // Ankr free tier
+        'https://solana-api.projectserum.com'        // Project Serum
+    ];
 
-    // Third-party CORS proxies
+    // Third-party CORS proxies (fallback)
     const thirdPartyProxies = (typeof PROXY_SERVICES !== 'undefined') ? PROXY_SERVICES : [
         { url: 'https://api.codetabs.com/v1/proxy?quest=', name: 'codetabs' }
     ];
@@ -43,7 +52,39 @@ async function rpcWithProxyChain(method, params) {
         }
     }
 
-    // --- STRATEGY 1: Third-party Proxies ---
+    // --- STRATEGY 1: PHP Proxy (Primary - works on localhost) ---
+    for (const ep of rpcs) {
+        try {
+            const phpUrl = LF_PHP_PROXY + encodeURIComponent(ep);
+            const r = await fetchWithTimeout(phpUrl, fetchOpts);
+
+            // Try to parse JSON even if status is not OK (RPC errors come as JSON)
+            const text = await r.text();
+            let d;
+            try {
+                d = JSON.parse(text);
+            } catch (parseErr) {
+                console.warn(`RPC: PHP proxy returned non-JSON for ${ep}:`, text.substring(0, 100));
+                continue;
+            }
+
+            // Check for RPC result
+            if (d.result !== undefined) {
+                log(`SOL: RPC via PHP PROXY -> ${ep.split('/').pop() || ep.split('/').slice(-2)[0]}`);
+                activeRpcRoute = { type: 'php', url: phpUrl, endpoint: ep, proxyName: 'php' };
+                return d.result;
+            }
+
+            // Check if it's an RPC error (not rate limit)
+            if (d.error) {
+                console.warn(`RPC: ${ep} returned error:`, d.error.message || d.error);
+            }
+        } catch (e) {
+            // Silent - try next endpoint
+        }
+    }
+
+    // --- STRATEGY 2: Third-party CORS Proxies (Fallback) ---
     for (const proxy of thirdPartyProxies) {
         for (const ep of rpcs) {
             try {
@@ -61,7 +102,7 @@ async function rpcWithProxyChain(method, params) {
         }
     }
 
-    // --- STRATEGY 2: Direct ---
+    // --- STRATEGY 3: Direct (Last Resort) ---
     for (const ep of rpcs) {
         try {
             const r = await fetchWithTimeout(ep, fetchOpts);
@@ -315,192 +356,60 @@ const MemoFeed = {
         }
         this.isLoading = true;
         const list = lfEl('memo-feed-list'), scanning = lfEl('feed-scanning');
-        const MAX_MEMOS = 500;
-        const MAX_RETRIES = 3;
 
-        // 1. Load Cache & Build Index
-        let cachedMemos = [];
-        const cachedRaw = localStorage.getItem('cachedMemos');
-        const cachedPDA = localStorage.getItem('cachedPDA');
-        const knownSigs = new Set();
-
-        // CACHE INVALIDATION: If PDA changed, wipe cache
-        if (cachedPDA !== this.PDA_ADDRESS) {
-            console.log('SOL: PDA changed. Clearing cache.');
-            localStorage.removeItem('cachedMemos');
-            localStorage.setItem('cachedPDA', this.PDA_ADDRESS);
-            // cachedMemos remains empty []
-        }
-        else if (cachedRaw) {
-            try {
-                cachedMemos = JSON.parse(cachedRaw);
-                if (Array.isArray(cachedMemos)) {
-                    cachedMemos.forEach(m => knownSigs.add(m.sig));
-                    this.renderMemos(cachedMemos); // Show stale data immediately
-                } else {
-                    cachedMemos = [];
-                }
-            } catch (e) {
-                console.warn('Cache parse error', e);
-                cachedMemos = [];
-            }
-        }
-
-        const SPINNER_HTML = '<span class="live-feed-spinner"></span>';
-
-        // UI State
-        if (cachedMemos.length === 0) {
-            scanning.textContent = '';
-            if (retryCount === 0) {
-                list.innerHTML = `
-                    <div class="poly-loader-container" style="height: 100px;">
-                        <div class="poly-loader"></div>
-                    </div>
-                `;
-            }
-        } else {
-            scanning.innerHTML = `| ${cachedMemos.length} MEMOS (SYNCING...${SPINNER_HTML})`;
-        }
+        // Show loading state
+        scanning.textContent = '';
+        list.innerHTML = `
+            <div class="poly-loader-container" style="height: 100px;">
+                <div class="poly-loader"></div>
+            </div>
+        `;
 
         try {
-            let before = null;
-            let newMemos = [];
-            let pageCount = 0;
-            let hitKnownHistory = false;
-            let totalProcessed = 0;
+            // Fetch memos from local JSON file (generated by fetch_memos.py)
+            log('SOL: Loading memos from memos.json...');
+            const response = await fetch('memos.json?v=' + Date.now());
 
-            log(`SOL: Smart Sync started. Retry: ${retryCount}. Known signatures: ${knownSigs.size}`);
-
-            // PAGINATION LOOP
-            while (newMemos.length < MAX_MEMOS && !hitKnownHistory) {
-                pageCount++;
-                scanning.innerHTML = `SYNCING [${newMemos.length}]${SPINNER_HTML}`;
-
-                // 1. Fetch Signatures
-                const sigParams = { limit: this.CHUNK_SIZE, commitment: 'confirmed' };
-                if (before) sigParams.before = before;
-
-                const batchSigs = await this.rpc('getSignaturesForAddress', [this.PDA_ADDRESS, sigParams]);
-
-                if (!batchSigs || batchSigs.length === 0) {
-                    console.log('SOL: End of history reached');
-                    break;
-                }
-
-                // 2. Filter & Check Overlap
-                let signaturesToProcess = [];
-                for (const s of batchSigs) {
-                    if (s.err) continue; // Skip failed txs
-
-                    if (knownSigs.has(s.signature)) {
-                        console.log(`SOL: Found known signature ${this.short(s.signature)} - OPTIMIZATION TRIGGERED. Stopping fetch.`);
-                        hitKnownHistory = true;
-                        break; // Stop collecting signatures from this batch
-                    }
-                    signaturesToProcess.push(s);
-                }
-
-                if (signaturesToProcess.length === 0 && hitKnownHistory) {
-                    break; // Exact overlap start
-                }
-
-                // 3. Process New Transactions (REAL-TIME)
-                console.log(`SOL: Processing ${signaturesToProcess.length} new sigs (Page ${pageCount})...`);
-
-                // Reverse to process oldest-first, so prepending puts newest at top
-                signaturesToProcess.reverse();
-
-                // Process sequentially to show results in real-time
-                for (const s of signaturesToProcess) {
-                    try {
-                        // Fetch transaction
-                        const tx = await this.rpc('getTransaction', [s.signature, {
-                            encoding: 'jsonParsed',
-                            maxSupportedTransactionVersion: 0,
-                            commitment: 'confirmed'
-                        }]);
-
-                        // Extract memo
-                        const memo = this.extractMemoFromTx(tx, s.signature);
-
-                        if (memo) {
-                            // ✨ RENDER IMMEDIATELY
-                            this.renderSingleMemo(memo);
-                            newMemos.push(memo);
-
-                            // Update counter in real-time
-                            scanning.innerHTML = `SYNCING [${newMemos.length}]${SPINNER_HTML}`;
-
-                            if (newMemos.length >= MAX_MEMOS) break;
-                        }
-
-                    } catch (err) {
-                        console.warn(`Failed to process ${this.short(s.signature)}:`, err.message);
-                    }
-                }
-
-                // Prepare next cursor (if we didn't hit history)
-                if (!hitKnownHistory) {
-                    before = batchSigs[batchSigs.length - 1].signature;
-                }
-
-                // Safety: break if no progress to avoid inf loops
-                if (batchSigs.length < this.CHUNK_SIZE) break;
+            if (!response.ok) {
+                throw new Error(`Failed to load memos.json: ${response.status}`);
             }
 
-            // 4. Merge & Save
-            const finalMemos = [...newMemos, ...cachedMemos];
+            const data = await response.json();
+            const rawMemos = data.memos || [];
 
-            // Deduplicate logic (integrity check)
-            const uniqueMap = new Map();
-            finalMemos.forEach(m => uniqueMap.set(m.sig, m));
-            const uniqueMemos = Array.from(uniqueMap.values());
+            // Transform to internal format
+            const memos = rawMemos.map(m => ({
+                sig: m.signature,
+                txt: m.content,
+                time: m.timestamp,
+                author: m.author
+            }));
 
-            // Sort & Trim
-            uniqueMemos.sort((a, b) => b.time - a.time);
-            const trimmedMemos = uniqueMemos.slice(0, MAX_MEMOS);
+            // Sort by time (newest first)
+            memos.sort((a, b) => b.time - a.time);
 
-            log(`SOL: Sync complete. +${newMemos.length} new, ${trimmedMemos.length} total.`);
+            log(`SOL: Loaded ${memos.length} memos from JSON file.`);
 
-            this.renderMemos(trimmedMemos);
-            localStorage.setItem('cachedMemos', JSON.stringify(trimmedMemos));
-            scanning.textContent = `| ${trimmedMemos.length} MEMOS`;
+            this.renderMemos(memos);
+            scanning.textContent = `| ${memos.length} MEMOS`;
 
-            if (trimmedMemos.length === 0) {
-                list.innerHTML = '<div class="feed-placeholder">No memos found.</div>';
+            if (memos.length === 0) {
+                list.innerHTML = '<div class="feed-placeholder">No memos found. Run fetch_memos.py to update.</div>';
                 scanning.textContent = '| 0 MEMOS';
             }
+
             this.isLoading = false;
 
         } catch (e) {
-            console.error(`Memo feed error (Attempt ${retryCount + 1}/${MAX_RETRIES + 1}):`, e);
-
-            if (retryCount < MAX_RETRIES) {
-                const backoff = (retryCount + 1) * 2000;
-                scanning.textContent = `Retrying in ${backoff / 1000}s...`;
-
-                if (cachedMemos.length === 0) {
-                    list.innerHTML = `
-                        <div class="poly-loader-container" style="height: 100px;">
-                            <div class="poly-loader"></div>
-                            <div class="poly-loader-text">CONNECTION FAILED. RETRYING (${retryCount + 1})...</div>
-                        </div>
-                    `;
-                }
-
-                setTimeout(() => this.load(retryCount + 1), backoff);
-                return;
-            }
-
-            scanning.textContent = 'Connection Error';
-            if (cachedMemos.length === 0) {
-                list.innerHTML = `
-                    <div class="feed-error">
-                        <div style="margin-bottom:10px; color:#ff3333;">CONNECTION FAILED</div>
-                        <div style="font-size:10px; color:#888;">${e.message}</div>
-                        <button onclick="MemoFeed.load()" class="intel-btn" style="margin-top:15px; width:100%;">RETRY CONNECTION</button>
-                    </div>`;
-            }
+            console.error('Memo feed error:', e);
+            scanning.textContent = 'Load Error';
+            list.innerHTML = `
+                <div class="feed-error">
+                    <div style="margin-bottom:10px; color:#ff3333;">FAILED TO LOAD MEMOS</div>
+                    <div style="font-size:10px; color:#888;">${e.message}</div>
+                    <div style="font-size:9px; color:#666; margin-top:10px;">Run: python scripts/fetch_memos.py</div>
+                    <button onclick="MemoFeed.load()" class="intel-btn" style="margin-top:15px; width:100%;">RETRY</button>
+                </div>`;
             this.isLoading = false;
         }
     },
@@ -746,23 +655,35 @@ const MemoSender = {
         this.rpc('getLatestBlockhash', [{ commitment: 'confirmed' }]).catch(() => { });
     },
 
-    // --- Demo RPC Implementation (Direct First -> Proxy) ---
+    // --- RPC Implementation (PHP Proxy First -> Third Party -> Direct) ---
     async rpc(method, params) {
         const body = JSON.stringify({ jsonrpc: '2.0', id: 1, method, params });
+        const phpProxy = (typeof PHP_PROXY !== 'undefined') ? PHP_PROXY : 'proxy.php?url=';
 
-        // Strategy 1: Try ALL direct endpoints first
-        for (let i = 0; i < this.CFG.RPCS.length; i++) {
-            const ep = this.CFG.RPCS[i];
-            const result = await this.tryRpcCall(ep, body, method, i);
+        // Strategy 1: Try PHP proxy first (no CORS issues)
+        for (const ep of this.CFG.RPCS) {
+            try {
+                const r = await fetch(phpProxy + encodeURIComponent(ep), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body
+                });
+                if (r.ok) {
+                    const d = await r.json();
+                    if (d.result !== undefined) return d.result;
+                }
+            } catch (e) { /* try next */ }
+        }
+
+        // Strategy 2: Try CORS proxy
+        for (const ep of this.CFG.RPCS) {
+            const result = await this.tryRpcCall(this.CFG.CORS_PROXY + encodeURIComponent(ep), body, method, 0);
             if (result !== null) return result;
         }
 
-        // Strategy 2: If all direct failed, try via CORS Proxy (LAST OPTION)
-        console.warn('All direct RPCs failed, trying CORS proxy...');
+        // Strategy 3: Direct (may fail CORS but try anyway)
         for (let i = 0; i < this.CFG.RPCS.length; i++) {
-            const ep = this.CFG.RPCS[i];
-            const proxiedUrl = this.CFG.CORS_PROXY + encodeURIComponent(ep);
-            const result = await this.tryRpcCall(proxiedUrl, body, method, i);
+            const result = await this.tryRpcCall(this.CFG.RPCS[i], body, method, i);
             if (result !== null) return result;
         }
 

@@ -1087,22 +1087,24 @@ function updatePolyWsSubscriptions(allMarkets) {
     const tokensToSub = [...filteredTokens].filter(t => !polyWsSubscribedTokens.has(t));
     const tokensToUnsub = [...polyWsSubscribedTokens].filter(t => !filteredTokens.has(t));
 
+    // Polymarket WebSocket uses 'assets_ids' not 'tokens'
+    // Batch subscriptions to avoid message size limits
+    const BATCH_SIZE = 100;
+
     if (tokensToSub.length > 0) {
-        polyWs.send(JSON.stringify({
-            type: "subscribe",
-            channels: ["market"],
-            tokens: tokensToSub
-        }));
+        for (let i = 0; i < tokensToSub.length; i += BATCH_SIZE) {
+            const batch = tokensToSub.slice(i, i + BATCH_SIZE);
+            polyWs.send(JSON.stringify({
+                type: "market",
+                assets_ids: batch
+            }));
+        }
         tokensToSub.forEach(t => polyWsSubscribedTokens.add(t));
-        // console.log(`POLY: WebSocket subscribed to ${tokensToSub.length} new tokens`);
+        console.log(`POLY: WebSocket subscribed to ${tokensToSub.length} tokens`);
     }
 
     if (tokensToUnsub.length > 0) {
-        polyWs.send(JSON.stringify({
-            type: "unsubscribe",
-            channels: ["market"],
-            tokens: tokensToUnsub
-        }));
+        // Note: Polymarket may not support unsubscribe - just clear our tracking
         tokensToUnsub.forEach(t => polyWsSubscribedTokens.delete(t));
     }
 }
@@ -1110,11 +1112,30 @@ function updatePolyWsSubscriptions(allMarkets) {
 function initPolyWs() {
     if (polyWs && (polyWs.readyState === WebSocket.CONNECTING || polyWs.readyState === WebSocket.OPEN)) return;
 
-    // console.log('POLY: Initializing WebSocket...');
-    polyWs = new WebSocket(POLY_WS_URL);
+    console.log('POLY: Initializing WebSocket to', POLY_WS_URL);
+
+    try {
+        polyWs = new WebSocket(POLY_WS_URL);
+    } catch (e) {
+        console.error('POLY: WebSocket creation failed:', e);
+        setTimeout(initPolyWs, 10000);
+        return;
+    }
+
+    // Ping/Pong keepalive
+    let pingInterval = null;
 
     polyWs.onopen = () => {
         logSystem("POLY: Price WebSocket established.");
+        console.log('POLY: WebSocket connected successfully');
+
+        // Start ping interval to keep connection alive
+        pingInterval = setInterval(() => {
+            if (polyWs && polyWs.readyState === WebSocket.OPEN) {
+                polyWs.send(JSON.stringify({ type: "ping" }));
+            }
+        }, 30000);
+
         // If we already have filtered data, subscribe
         if (polyMarketsCurrent.length > 0) {
             updatePolyWsSubscriptions(polyMarketsCurrent);
@@ -1124,22 +1145,29 @@ function initPolyWs() {
     polyWs.onmessage = (event) => {
         try {
             const data = JSON.parse(event.data);
+
+            // Handle pong responses silently
+            if (data.type === 'pong') return;
+
             if (Array.isArray(data)) {
                 data.forEach(msg => handlePolyWsMessage(msg));
             } else {
                 handlePolyWsMessage(data);
             }
-        } catch (e) { }
+        } catch (e) {
+            console.warn('POLY: WebSocket message parse error:', e);
+        }
     };
 
-    polyWs.onclose = () => {
-        // console.warn('POLY: WebSocket disconnected, retrying in 5s...');
+    polyWs.onclose = (event) => {
+        console.warn('POLY: WebSocket disconnected, code:', event.code, 'reason:', event.reason);
         polyWsSubscribedTokens.clear();
+        if (pingInterval) clearInterval(pingInterval);
         setTimeout(initPolyWs, 5000);
     };
 
     polyWs.onerror = (e) => {
-        // console.error('POLY: WebSocket error', e);
+        console.error('POLY: WebSocket error:', e);
     };
 }
 
@@ -1154,15 +1182,22 @@ function handlePolyWsMessage(msg) {
 
         // Update both state arrays
         let changed = false;
+        let marketTitle = null;
+        let oldProb = null;
         [polyMarketsCurrent, polyMarketsRaw].forEach(list => {
             const market = list.find(m => m.id === marketId);
             if (market && market.probability !== newProb) {
+                oldProb = market.probability;
+                marketTitle = market.title;
                 market.probability = newProb;
                 changed = true;
             }
         });
 
         if (changed) {
+            // Log the WebSocket price update
+            const direction = parseFloat(newProb) > parseFloat(oldProb) ? '▲' : '▼';
+            console.log(`POLY WS: ${direction} ${marketTitle?.substring(0, 50) || marketId}... ${oldProb}% → ${newProb}%`);
             updatePolyLiveUI(marketId, newProb);
         }
     }

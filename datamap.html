@@ -400,6 +400,18 @@
                                 </label>
                             </div>
                         </div>
+                        <div class="control-section">
+                            <div class="control-row">
+                                <label class="toggle-container">
+                                    <input type="checkbox" id="livetv-toggle">
+                                    <span class="checkmark"></span>
+                                    <span class="toggle-label">WATCH LIVE</span>
+                                </label>
+                                <div class="row-icons">
+                                    <span id="livetv-settings-btn" class="settings-icon">⚙</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -659,6 +671,17 @@
                     <li>Polymarket (Prediction Markets & Future Analytics)</li>
                     <li>USGS (Earthquakes)</li>
                     <li>OpenFreeMap (Base Map)</li>
+                </ul>
+                <br>
+                <p><strong>SOLANA INSCRIPTIONS:</strong></p>
+                <p>GEOINT.WORLD features a decentralized, crowdsourced intelligence layer powered by Solana blockchain
+                    inscriptions. Users can inscribe geospatial data (earthquakes, events, custom markers) directly to
+                    the chain, creating an immutable, permissionless record of global intelligence.</p>
+                <ul class="info-list">
+                    <li>Data is stored on-chain via SPL Memo program</li>
+                    <li>Access the Live Feed to view all inscribed memos</li>
+                    <li>Connect your Solana wallet to inscribe your own data</li>
+                    <li>All inscriptions include coordinates, timestamps, and author signatures</li>
                 </ul>
                 <p><strong>GUIDES & DOCUMENTATION:</strong></p>
                 <div class="info-docs-grid">
@@ -1513,6 +1536,30 @@
         </div>
     </div>
 
+    <!-- LIVE TV OVERLAY CONTAINER -->
+    <div id="livetv-overlay-container"></div>
+
+    <!-- LIVE TV MODAL -->
+    <div id="livetv-modal" class="modal">
+        <div class="modal-content livetv-content">
+            <div class="panel-header">
+                <span id="livetv-title">// LIVE NEWS STREAMS</span>
+                <span id="close-livetv-btn" class="cursor-pointer">[X]</span>
+            </div>
+            <div class="livetv-body">
+                <div class="livetv-controls">
+                    <button id="livetv-refresh-btn" class="intel-btn">REFRESH</button>
+                    <div style="flex-grow: 1;"></div>
+                    <span id="livetv-status" class="livetv-status-text">INITIALIZING...</span>
+                </div>
+
+                <div id="livetv-grid" class="livetv-grid list-mode">
+                    <!-- Stream cards injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- INSCRIPTION CONFIRM MODAL -->
     <div id="inscription-confirm-modal" class="modal" style="z-index: 10000;">
         <div class="modal-content" style="height: auto; max-height: 80vh; overflow-y: auto;">
@@ -1549,7 +1596,7 @@
 
     <!-- JS Modules -->
     <script src="js/inscriptions.js?v=151"></script>
-    <script src="js/livefeed.js?v=151"></script>
+    <script src="js/livefeed.js?v=154"></script>
     <script src="js/utils.js?v=151"></script>
     <script src="js/globals.js?v=151" defer></script>
     <script src="js/flights.js?v=151" defer></script>
@@ -1558,9 +1605,10 @@
     <script src="js/radio.js?v=151" defer></script>
     <script src="js/cables.js?v=151" defer></script>
     <script src="js/map.js?v=151" defer></script>
-    <script src="js/ui.js?v=151" defer></script>
+    <script src="js/ui.js?v=153" defer></script>
     <script src="js/news.js?v=151" defer></script>
-    <script src="js/polymarket.js?v=151" defer></script>
+    <script src="js/polymarket.js?v=152" defer></script>
+    <script src="js/livetv.js?v=151" defer></script>
     <script src="js/earthquakes.js?v=151" defer></script>
 
 </body>
