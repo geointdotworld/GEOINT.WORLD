@@ -1,10 +1,21 @@
 {
   "pda_address": "HQvMbrAMGjMkcobUV56MN9zaryPo9NarLddrEfc1wmLP",
-  "fetched_at": "2026-02-03T03:19:23.160344",
-  "total_signatures_scanned": 4,
-  "total_memos_found": 3,
-  "rpc_requests_made": 8,
+  "last_updated": "2026-02-03T11:15:02.747306",
+  "total_memos": 4,
+  "last_fetch_stats": {
+    "run_time": "0:00:00.867184",
+    "new_memos_found": 1,
+    "total_after_merge": 4,
+    "rpc_requests": 2
+  },
   "memos": [
+    {
+      "signature": "5zLtigZnwH1TwtHmyBJqaLfPEEgJ9ppb4hjG58SnXEMfHcEDdMUQYUJKFxQ4gnT2E48QAsqHHZqvpFeNKemQfcJY",
+      "author": "HxbehLwffcmcemwC18W4L6c4GjRuTy3L3aZSirKfV6SB",
+      "content": "{\"type\":\"earthquake-circles\",\"time\":\"2026-02-03T09:44:15.645Z\",\"mag\":5,\"place\":\"22 km E of Kitaibaraki, Japan\",\"depth\":59.65,\"lat\":\"36.7741\",\"lng\":\"140.9766\"}",
+      "timestamp": 1770112063000,
+      "datetime": "2026-02-03T09:47:43"
+    },
     {
       "signature": "2jnrQj85gHxM449E9AkZYtPrbRQSfAR9RdvK3o4sAKd681DuJ3vA4HHxyVBcNkVfBBNSFrJ9ihRGtPn3JW31xExk",
       "author": "51CAc7KSAM1d2JDT3LhXiecCCakHKr1pBtDy56C6WFde",
